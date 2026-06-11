@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — SalesIQ</title>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+
+<body>
+
+  <div class="orb orb-1" id="orb1"></div>
+  <div class="orb orb-2" id="orb2"></div>
+
+  <div class="auth-wrapper">
+
+    <!-- ── Left: Branding ── -->
+    <aside class="auth-brand" id="brandPanel">
+      <div class="brand-logo">
+        <div class="brand-logo-icon" id="logoIcon">SQ</div>
+        <span class="brand-logo-text">SalesIQ</span>
+      </div>
+
+      <div class="brand-hero">
+        <h1 class="brand-tagline">
+          Join your team's<br /><span id="accentWord">sales command</span><br />centre.
+        </h1>
+        <p class="brand-desc" id="brandDesc">
+          Create your account to start exploring dashboards, tracking KPIs, and collaborating with your sales team in
+          real time.
+        </p>
+        <div class="brand-stats">
+          <div class="stat-item">
+            <div class="stat-value">Free</div>
+            <div class="stat-label">Team project</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Roles available</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">10s</div>
+            <div class="stat-label">Setup time</div>
+          </div>
+        </div>
+      </div>
+
+      <svg class="brand-chart" viewBox="0 0 500 100" preserveAspectRatio="none">
+        <polyline points="0,90 60,70 120,80 180,50 240,60 300,30 360,45 420,20 480,30 500,18" fill="none" stroke="white"
+          stroke-width="2" />
+        <polygon points="0,90 60,70 120,80 180,50 240,60 300,30 360,45 420,20 480,30 500,18 500,100 0,100" fill="white"
+          opacity="0.5" />
+      </svg>
+
+      <p class="brand-footer">© 2026 SalesIQ — Team Project · Module 1</p>
+    </aside>
+
+    <!-- ── Right: Registration form ── -->
+    <main class="auth-form-panel">
+      <div class="auth-card">
+
+        <!-- Role switcher -->
+        <div class="role-switch">
+          <button class="role-btn active-user" id="btnUser" onclick="switchRole('user')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+            </svg>
+            User Register
+          </button>
+          <button class="role-btn" id="btnAdmin" onclick="switchRole('admin')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M12 3l8 4v5c0 5-3.5 9.3-8 10.7C7.5 21.3 4 17 4 12V7l8-4z" />
+            </svg>
+            Admin Register
+          </button>
+        </div>
+
+        <!-- Alert -->
+        <div class="alert" id="alertBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" id="alertIcon">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span id="alertMsg">Something went wrong.</span>
+        </div>
+
+        <!-- Heading -->
+        <div class="form-heading">
+          <h2 class="form-title" id="formTitle">Create account</h2>
+          <p class="form-subtitle">
+            Already have one?
+            <a href="login.html" id="loginLink">Sign in</a>
+          </p>
+        </div>
+
+        <!-- Admin badge -->
+        <div id="adminBadge" style="display:none; margin-bottom:14px;">
+          <span class="admin-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M12 3l8 4v5c0 5-3.5 9.3-8 10.7C7.5 21.3 4 17 4 12V7l8-4z" />
+            </svg>
+            Admin registration — requires secret key
+          </span>
+        </div>
+
+        <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+
+          <!-- Name row -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First name</label>
+              <div class="input-wrap">
+                <span class="input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                  </svg>
+                </span>
+                <input type="text" class="form-input" id="firstNameInput" placeholder="John" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last name</label>
+              <div class="input-wrap">
+                <span class="input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                  </svg>
+                </span>
+                <input type="text" class="form-input" id="lastNameInput" placeholder="Doe" required />
+              </div>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="m22 7-10 7L2 7" />
+                </svg>
+              </span>
+              <input type="email" class="form-input" id="emailInput" placeholder="you@example.com" required />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </span>
+              <input type="password" class="form-input" id="pwInput" placeholder="Min 8 characters"
+                autocomplete="new-password" oninput="checkStrength(this.value)" required />
+              <button type="button" class="pw-toggle" onclick="togglePw('pwInput', this)" aria-label="Toggle password">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+            <!-- Strength bar -->
+            <div class="pw-strength">
+              <div class="pw-strength-bar">
+                <div class="pw-strength-fill" id="strengthFill"></div>
+              </div>
+              <span class="pw-strength-label" id="strengthLabel">Enter a password</span>
+            </div>
+          </div>
+
+          <!-- Confirm password -->
+          <div class="form-group">
+            <label class="form-label">Confirm password</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </span>
+              <input type="password" class="form-input" id="confirmPwInput" placeholder="Re-enter password"
+                autocomplete="new-password" required />
+              <button type="button" class="pw-toggle" onclick="togglePw('confirmPwInput', this)"
+                aria-label="Toggle confirm password">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Admin secret key (conditional) -->
+          <div class="form-group" id="adminKeyGroup" style="display:none;">
+            <label class="form-label">Admin secret key</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path
+                    d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                </svg>
+              </span>
+              <input type="password" class="form-input admin-focus" id="adminKeyInput"
+                placeholder="Provided by your administrator" />
+            </div>
+          </div>
+
+          <!-- Terms -->
+          <div style="margin-bottom:22px;">
+            <label class="checkbox-wrap"
+              style="font-size:13px; color:var(--text-sub); align-items:flex-start; gap:10px;">
+              <input type="checkbox" id="termsCheck" style="margin-top:3px;" />
+              <span>I agree to the <a href="#" style="color:var(--accent); text-decoration:none;" id="termsLink">Terms
+                  of Service</a> and <a href="#" style="color:var(--accent); text-decoration:none;">Privacy
+                  Policy</a></span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-submit btn-user" id="submitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <line x1="19" y1="8" x2="19" y2="14" />
+              <line x1="22" y1="11" x2="16" y2="11" />
+            </svg>
+            <span id="submitLabel">Create User Account</span>
+          </button>
+
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /* ── API base URL ── */
+    const API = 'http://127.0.0.1:5000/api';
+
+    let currentRole = 'user';
+
+    function switchRole(role) {
+      currentRole = role;
+      const isAdmin = role === 'admin';
+
+      document.getElementById('btnUser').className = 'role-btn' + (isAdmin ? '' : ' active-user');
+      document.getElementById('btnAdmin').className = 'role-btn' + (isAdmin ? ' active-admin' : '');
+
+      document.getElementById('logoIcon').className = isAdmin ? 'brand-logo-icon admin-mode' : 'brand-logo-icon';
+      document.getElementById('accentWord').style.color = isAdmin ? 'var(--admin)' : 'var(--accent)';
+
+      document.getElementById('brandDesc').textContent = isAdmin
+        ? 'Register an admin account to unlock full system control — manage users, configure all modules, and oversee data operations.'
+        : 'Create your account to start exploring dashboards, tracking KPIs, and collaborating with your sales team in real time.';
+
+      document.getElementById('orb1').className = isAdmin ? 'orb orb-admin-1' : 'orb orb-1';
+      document.getElementById('orb2').className = isAdmin ? 'orb orb-admin-2' : 'orb orb-2';
+
+      document.getElementById('formTitle').textContent = isAdmin ? 'Admin registration' : 'Create account';
+      document.getElementById('submitLabel').textContent = isAdmin ? 'Create Admin Account' : 'Create User Account';
+      document.getElementById('submitBtn').className = 'btn-submit ' + (isAdmin ? 'btn-admin' : 'btn-user');
+      document.getElementById('adminBadge').style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('adminKeyGroup').style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('loginLink').className = isAdmin ? 'admin-link' : '';
+
+      ['firstNameInput', 'lastNameInput', 'emailInput', 'pwInput', 'confirmPwInput'].forEach(id => {
+        document.getElementById(id).className = 'form-input' + (isAdmin ? ' admin-focus' : '');
+      });
+
+      hideAlert();
+    }
+
+    function togglePw(id, btn) {
+      const inp = document.getElementById(id);
+      const isText = inp.type === 'text';
+      inp.type = isText ? 'password' : 'text';
+      btn.innerHTML = isText
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+    }
+
+    function checkStrength(pw) {
+      const fill = document.getElementById('strengthFill');
+      const label = document.getElementById('strengthLabel');
+      let score = 0;
+      if (pw.length >= 8) score++;
+      if (/[A-Z]/.test(pw)) score++;
+      if (/[0-9]/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+      const levels = [
+        { pct: '0%', color: 'transparent', text: 'Enter a password' },
+        { pct: '25%', color: '#f56565', text: 'Weak' },
+        { pct: '50%', color: '#f0a04b', text: 'Fair' },
+        { pct: '75%', color: '#4f8ef7', text: 'Good' },
+        { pct: '100%', color: '#3ecf8e', text: 'Strong ✓' },
+      ];
+      const lvl = pw.length === 0 ? levels[0] : levels[score];
+      fill.style.width = lvl.pct;
+      fill.style.background = lvl.color;
+      label.textContent = lvl.text;
+      label.style.color = lvl.color || 'var(--text-dim)';
+    }
+
+    function showAlert(type, msg) {
+      const box = document.getElementById('alertBox');
+      box.className = 'alert alert-' + type + ' show';
+      document.getElementById('alertMsg').textContent = msg;
+    }
+    function hideAlert() { document.getElementById('alertBox').className = 'alert'; }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const first   = document.getElementById('firstNameInput').value.trim();
+      const last    = document.getElementById('lastNameInput').value.trim();
+      const email   = document.getElementById('emailInput').value.trim();
+      const pw      = document.getElementById('pwInput').value;
+      const confirm = document.getElementById('confirmPwInput').value;
+      const terms   = document.getElementById('termsCheck').checked;
+      const adminKey = document.getElementById('adminKeyInput').value;
+      const btn     = document.getElementById('submitBtn');
+
+      /* Front-end validation */
+      if (!first || !last || !email || !pw || !confirm) {
+        showAlert('danger', 'Please fill in all required fields.'); return;
+      }
+      if (pw !== confirm) {
+        showAlert('danger', 'Passwords do not match.'); return;
+      }
+      if (pw.length < 8) {
+        showAlert('danger', 'Password must be at least 8 characters.'); return;
+      }
+      if (!terms) {
+        showAlert('danger', 'Please accept the Terms of Service to continue.'); return;
+      }
+      if (currentRole === 'admin' && !adminKey) {
+        showAlert('danger', 'Admin secret key is required.'); return;
+      }
+
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      document.getElementById('submitLabel').textContent = 'Creating account…';
+
+      try {
+        /* Real API call to Flask backend */
+        const res = await fetch(`${API}/auth/register`, {
+          method      : 'POST',
+          headers     : { 'Content-Type': 'application/json' },
+          credentials : 'include',
+          body        : JSON.stringify({
+            first_name : first,
+            last_name  : last,
+            email,
+            password   : pw,
+            role       : currentRole,
+            admin_key  : adminKey
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          showAlert('success', `Account created! Welcome, ${first}. Redirecting to login…`);
+          setTimeout(() => { window.location.href = 'login.html'; }, 1400);
+        } else {
+          showAlert('danger', data.error || 'Registration failed. Please try again.');
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          document.getElementById('submitLabel').textContent =
+            currentRole === 'admin' ? 'Create Admin Account' : 'Create User Account';
+        }
+
+      } catch (err) {
+        /* Flask offline — show friendly message */
+        showAlert('danger', 'Cannot reach server. Make sure Flask is running on port 5000.');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        document.getElementById('submitLabel').textContent =
+          currentRole === 'admin' ? 'Create Admin Account' : 'Create User Account';
+      }
+    }
+  </script>
+</body>
+
+</html>

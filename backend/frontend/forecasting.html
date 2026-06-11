@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Sales Forecasting — SalesIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #04060e;
+      --bg2: #080c1a;
+      --bg3: #0c1122;
+      --bg4: #11172e;
+      --bg5: #171e38;
+      --border: rgba(255, 255, 255, 0.055);
+      --border-h: rgba(255, 255, 255, 0.12);
+      --text: #d4dcf0;
+      --text-sub: #4a5670;
+      --text-dim: #1a2038;
+      --violet: #8b5cf6;
+      --violet-g: rgba(139, 92, 246, 0.14);
+      --violet-glow: rgba(139, 92, 246, 0.08);
+      --cyan: #06b6d4;
+      --cyan-g: rgba(6, 182, 212, 0.12);
+      --green: #10b981;
+      --green-g: rgba(16, 185, 129, 0.12);
+      --amber: #f59e0b;
+      --amber-g: rgba(245, 158, 11, 0.12);
+      --rose: #f43f5e;
+      --rose-g: rgba(244, 63, 94, 0.12);
+      --forecast: #a78bfa;
+      --sidebar-w: 244px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(139, 92, 246, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, #160a3a 0%, transparent 65%);
+      top: -280px;
+      right: -120px;
+      opacity: 0.55;
+    }
+
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle, #021820 0%, transparent 70%);
+      bottom: -160px;
+      left: 180px;
+      opacity: 0.4;
+    }
+
+    .orb-3 {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, #0a0618 0%, transparent 70%);
+      top: 48%;
+      left: 42%;
+      opacity: 0.25;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--violet);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .logo-name {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .nav-section {
+      padding: 14px 10px 2px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-sub);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+      margin-bottom: 1px;
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke-width: 1.8;
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--violet-g);
+      color: var(--violet);
+      font-weight: 500;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      cursor: pointer;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* MAIN */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      padding: 0 28px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(4, 6, 14, 0.9);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .page-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.2px;
+    }
+
+    .page-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-h);
+    }
+
+    .btn-violet {
+      background: var(--violet);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .btn-violet:hover {
+      opacity: .88;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .content {
+      padding: 22px 28px 48px;
+      flex: 1;
+    }
+
+    /* AI Banner */
+    .ai-banner {
+      background: linear-gradient(120deg, var(--bg3) 0%, var(--bg4) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .ai-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+    }
+
+    .ai-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 80% 50%, rgba(139, 92, 246, 0.06), transparent 60%);
+      pointer-events: none;
+    }
+
+    .ai-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .ai-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: var(--violet-g);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .ai-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 3px;
+    }
+
+    .ai-desc {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--violet-g);
+      color: var(--violet);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+    }
+
+    /* KPI strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      animation: fadeUp 0.4s ease both;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .kpi-card.cv::before {
+      background: var(--violet)
+    }
+
+    .kpi-card.cc::before {
+      background: var(--cyan)
+    }
+
+    .kpi-card.cg::before {
+      background: var(--green)
+    }
+
+    .kpi-card.ca::before {
+      background: var(--amber)
+    }
+
+    .kpi-card:nth-child(1) {
+      animation-delay: .04s
+    }
+
+    .kpi-card:nth-child(2) {
+      animation-delay: .08s
+    }
+
+    .kpi-card:nth-child(3) {
+      animation-delay: .12s
+    }
+
+    .kpi-card:nth-child(4) {
+      animation-delay: .16s
+    }
+
+    .kpi-card:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .kpi-label {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+
+    .kpi-value {
+      font-family: var(--font-head);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .kpi-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+      margin-top: 5px;
+    }
+
+    .up {
+      background: var(--green-g);
+      color: var(--green);
+    }
+
+    .neu {
+      background: var(--violet-g);
+      color: var(--violet);
+    }
+
+    /* main chart card */
+    .chart-mega {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 18px;
+      animation: fadeUp 0.48s ease 0.2s both;
+    }
+
+    .chart-mega-head {
+      padding: 20px 22px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .chart-mega-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .chart-mega-sub {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding: 12px 22px 0;
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .leg-solid {
+      width: 22px;
+      height: 3px;
+      border-radius: 99px;
+    }
+
+    .leg-dashed {
+      width: 22px;
+      height: 0;
+      border-top: 2px dashed;
+      opacity: 0.8;
+    }
+
+    .leg-band {
+      width: 22px;
+      height: 8px;
+      border-radius: 3px;
+      opacity: 0.35;
+    }
+
+    .chart-mega-body {
+      padding: 10px 18px 20px;
+    }
+
+    /* scenario tabs */
+    .scenario-tabs {
+      display: flex;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .sc-tab {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      transition: all 0.18s;
+    }
+
+    .sc-tab.active {
+      background: var(--violet);
+      color: #fff;
+    }
+
+    .sc-tab:hover:not(.active) {
+      color: var(--text);
+    }
+
+    /* bottom grid */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    /* card */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card-head {
+      padding: 18px 20px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 14px 20px 20px;
+    }
+
+    /* prediction table */
+    .pred-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .pred-table th {
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pred-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .pred-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .pred-table tbody tr {
+      transition: background 0.14s;
+    }
+
+    .pred-table tbody tr:hover {
+      background: var(--bg3);
+    }
+
+    .forecast-cell {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .forecast-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* accuracy metrics */
+    .acc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .acc-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      text-align: center;
+    }
+
+    .acc-val {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 3px;
+    }
+
+    .acc-label {
+      font-size: 10px;
+      color: var(--text-sub);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* model info */
+    .model-info {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .model-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .model-row:last-child {
+      border-bottom: none;
+    }
+
+    .model-key {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .model-val {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .badge-violet {
+      background: var(--violet-g);
+      color: var(--violet);
+      border: 1px solid rgba(139, 92, 246, 0.22);
+    }
+
+    .badge-green {
+      background: var(--green-g);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, 0.22);
+    }
+
+    .badge-amber {
+      background: var(--amber-g);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.22);
+    }
+
+    .badge-cyan {
+      background: var(--cyan-g);
+      color: var(--cyan);
+      border: 1px solid rgba(6, 182, 212, 0.22);
+    }
+
+    /* insight chips */
+    .insight-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      animation: fadeUp 0.5s ease 0.46s both;
+    }
+
+    .i-chip {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: all 0.2s;
+    }
+
+    .i-chip:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .i-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .i-icon svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .i-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .i-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.55;
+    }
+
+    /* run model btn pulse */
+    @keyframes aiPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.5)
+      }
+
+      50% {
+        box-shadow: 0 0 0 10px rgba(139, 92, 246, 0)
+      }
+    }
+
+    .ai-running {
+      animation: aiPulse 1.5s infinite;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @media(max-width:1100px) {
+      .bottom-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      ;
+
+      .kpi-strip {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    @media(max-width:900px) {
+      .sidebar {
+        transform: translateX(-100%)
+      }
+
+      ;
+
+      .main {
+        margin-left: 0
+      }
+
+      ;
+
+      .content {
+        padding: 14px
+      }
+
+      ;
+
+      .bottom-grid {
+        grid-template-columns: 1fr
+      }
+
+      ;
+
+      .insight-row {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-box">SQ</div>
+        <div>
+          <div class="logo-name">SalesIQ</div>
+          <div class="logo-sub">v1.0 · Team Project</div>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a class="nav-item" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>Dashboard</a>
+        <a class="nav-item" href="sales-data.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+          </svg>Sales Data</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Analytics</div>
+        <a class="nav-item" href="trends.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>Trends</a>
+        <a class="nav-item" href="products.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>Products</a>
+        <a class="nav-item" href="customers.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>Customers</a>
+        <a class="nav-item" href="regional.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>Regional</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">AI Modules</div>
+        <a class="nav-item active" href="forecasting.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>Forecasting</a>
+        <a class="nav-item" href="segmentation.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83" />
+          </svg>Segmentation</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <a class="nav-item" href="reports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>Reports</a>
+        <a class="nav-item" href="login.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>Logout</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar">AD</div>
+          <div>
+            <div style="font-size:12px;font-weight:500;">Admin User</div>
+            <div style="font-size:10px;color:var(--text-sub);">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="page-title">AI Sales Forecasting</div>
+          <div class="page-sub">Module 9 · Linear Regression · Scikit-learn · Next month & quarter prediction</div>
+        </div>
+        <div class="topbar-right">
+          <div class="scenario-tabs">
+            <button class="sc-tab active" onclick="setScenario('base',this)">Base</button>
+            <button class="sc-tab" onclick="setScenario('optimistic',this)">Optimistic</button>
+            <button class="sc-tab" onclick="setScenario('pessimistic',this)">Pessimistic</button>
+          </div>
+          <button class="btn btn-violet btn-sm" id="runBtn" onclick="runModel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Run Model
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- AI Banner -->
+        <div class="ai-banner">
+          <div class="ai-banner-left">
+            <div class="ai-icon">🤖</div>
+            <div>
+              <div class="ai-title">Linear Regression Forecast · Powered by Scikit-learn</div>
+              <div class="ai-desc">Trained on 16 months of historical sales data · R² = 0.948 · MAE = $2,184 · Last run:
+                Today at 09:42 AM</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="ai-badge">
+              <div
+                style="width:7px;height:7px;border-radius:50%;background:var(--violet);box-shadow:0 0 0 0 rgba(139,92,246,0.4);animation:pulse 2s infinite;">
+              </div>
+              Model Ready
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI strip -->
+        <div class="kpi-strip">
+          <div class="kpi-card cv">
+            <div class="kpi-label">Jun '26 Forecast</div>
+            <div class="kpi-value" id="kpi1" style="color:var(--violet);">$91,480</div>
+            <div class="kpi-sub">Next month prediction</div>
+            <div class="kpi-delta up">▲ +8.5% vs May actual</div>
+          </div>
+          <div class="kpi-card cc">
+            <div class="kpi-label">Q3 '26 Forecast</div>
+            <div class="kpi-value" id="kpi2" style="color:var(--cyan);">$298,400</div>
+            <div class="kpi-sub">Jul + Aug + Sep combined</div>
+            <div class="kpi-delta up">▲ +31.7% vs Q2</div>
+          </div>
+          <div class="kpi-card cg">
+            <div class="kpi-label">Model Accuracy</div>
+            <div class="kpi-value" style="color:var(--green);">94.8%</div>
+            <div class="kpi-sub">R² score on test set</div>
+            <div class="kpi-delta neu">R² = 0.948 · Good fit</div>
+          </div>
+          <div class="kpi-card ca">
+            <div class="kpi-label">Confidence Level</div>
+            <div class="kpi-value" style="color:var(--amber);">95%</div>
+            <div class="kpi-sub">Prediction interval width</div>
+            <div class="kpi-delta neu">±$6,200 error band</div>
+          </div>
+        </div>
+
+        <!-- Main forecast chart -->
+        <div class="chart-mega">
+          <div class="chart-mega-head">
+            <div>
+              <div class="chart-mega-title" id="chartTitle">Revenue Forecast — Historical + Linear Regression Projection
+              </div>
+              <div class="chart-mega-sub">Solid line = actual data · Dashed line = AI prediction · Shaded band = 95%
+                confidence interval</div>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <div class="leg-item">
+              <div class="leg-solid" style="background:var(--cyan);"></div>Actual Revenue
+            </div>
+            <div class="leg-item">
+              <div class="leg-dashed" style="border-color:var(--violet);"></div>AI Forecast
+            </div>
+            <div class="leg-item">
+              <div class="leg-band" style="background:var(--violet);"></div>95% Confidence Band
+            </div>
+            <div class="leg-item">
+              <div
+                style="width:22px;height:2px;background:rgba(255,255,255,0.2);border-top:2px dashed rgba(255,255,255,0.3);">
+              </div><span>Historical Boundary</span>
+            </div>
+          </div>
+          <div class="chart-mega-body">
+            <div style="position:relative;height:320px;">
+              <canvas id="forecastChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom 3-col -->
+        <div class="bottom-grid">
+
+          <!-- Prediction table -->
+          <div class="card" style="animation-delay:0.3s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Monthly Predictions</div>
+                <div class="card-sub">Next 6 months · Base scenario</div>
+              </div>
+              <span class="badge badge-violet">AI Generated</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="pred-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Forecast</th>
+                    <th>Lower</th>
+                    <th>Upper</th>
+                    <th>Conf.</th>
+                  </tr>
+                </thead>
+                <tbody id="predTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Accuracy metrics -->
+          <div class="card" style="animation-delay:0.36s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Model Performance</div>
+                <div class="card-sub">Accuracy metrics on test data</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="acc-grid" style="margin-bottom:14px;">
+                <div class="acc-item">
+                  <div class="acc-val" style="color:var(--green);">0.948</div>
+                  <div class="acc-label">R² Score</div>
+                </div>
+                <div class="acc-item">
+                  <div class="acc-val" style="color:var(--cyan);">$2,184</div>
+                  <div class="acc-label">MAE</div>
+                </div>
+                <div class="acc-item">
+                  <div class="acc-val" style="color:var(--violet);">$2,910</div>
+                  <div class="acc-label">RMSE</div>
+                </div>
+                <div class="acc-item">
+                  <div class="acc-val" style="color:var(--amber);">4.2%</div>
+                  <div class="acc-label">MAPE</div>
+                </div>
+              </div>
+              <!-- Residual mini chart -->
+              <div
+                style="font-size:10px;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:8px;">
+                Residual Distribution</div>
+              <div style="position:relative;height:90px;"><canvas id="residualChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Model info -->
+          <div class="card" style="animation-delay:0.42s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Model Configuration</div>
+                <div class="card-sub">Scikit-learn Linear Regression</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="model-info">
+                <div class="model-row"><span class="model-key">Algorithm</span><span class="model-val"><span
+                      class="badge badge-violet">LinearRegression</span></span></div>
+                <div class="model-row"><span class="model-key">Library</span><span class="model-val">Scikit-learn
+                    1.4.2</span></div>
+                <div class="model-row"><span class="model-key">Training Data</span><span class="model-val">16 months
+                    (Jan '25–Apr '26)</span></div>
+                <div class="model-row"><span class="model-key">Test Split</span><span class="model-val">80 / 20</span>
+                </div>
+                <div class="model-row"><span class="model-key">Features</span><span class="model-val">Month index,
+                    lag-1, lag-2</span></div>
+                <div class="model-row"><span class="model-key">Coefficient</span><span class="model-val"
+                    style="color:var(--violet);">+5,842 / month</span></div>
+                <div class="model-row"><span class="model-key">Intercept</span><span class="model-val">$38,240</span>
+                </div>
+                <div class="model-row"><span class="model-key">Last Trained</span><span class="model-val"><span
+                      class="badge badge-green">Today · Live</span></span></div>
+              </div>
+              <!-- TODO: POST /api/ai/forecast/run to re-train with new data -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Insight chips -->
+        <div class="insight-row">
+          <div class="i-chip">
+            <div class="i-icon" style="background:var(--violet-g);color:var(--violet);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">Strong Growth Trajectory</div>
+              <div class="i-desc">The regression model identifies a consistent <strong
+                  style="color:var(--violet);">+$5,842/month</strong> revenue growth coefficient. At this rate, the
+                annual run-rate exceeds <strong style="color:var(--violet);">$1.2M</strong> by Dec 2026.</div>
+            </div>
+          </div>
+          <div class="i-chip">
+            <div class="i-icon" style="background:var(--cyan-g);color:var(--cyan);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">High Confidence Predictions</div>
+              <div class="i-desc">R² of <strong style="color:var(--cyan);">0.948</strong> indicates the model explains
+                94.8% of revenue variance. The narrow ±$6,200 confidence band makes near-term forecasts highly reliable
+                for planning.</div>
+            </div>
+          </div>
+          <div class="i-chip">
+            <div class="i-icon" style="background:var(--amber-g);color:var(--amber);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">Q4 Uncertainty Widens</div>
+              <div class="i-desc">Confidence intervals widen to <strong style="color:var(--amber);">±$14,800</strong>
+                for Oct–Dec predictions — typical for longer horizons. Cross-validate with seasonal patterns before Q4
+                budget decisions.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /* ═══ FORECAST DATA ═══ */
+    const HISTORICAL = [
+      { label: 'Jan \'25', v: 41000 }, { label: 'Feb \'25', v: 43500 }, { label: 'Mar \'25', v: 50000 },
+      { label: 'Apr \'25', v: 58000 }, { label: 'May \'25', v: 74500 }, { label: 'Jun \'25', v: 62000 },
+      { label: 'Jul \'25', v: 66000 }, { label: 'Aug \'25', v: 70000 }, { label: 'Sep \'25', v: 75000 },
+      { label: 'Oct \'25', v: 79000 }, { label: 'Nov \'25', v: 84000 }, { label: 'Dec \'25', v: 90000 },
+      { label: 'Jan \'26', v: 52000 }, { label: 'Feb \'26', v: 47100 }, { label: 'Mar \'26', v: 63000 },
+      { label: 'Apr \'26', v: 68000 }, { label: 'May \'26', v: 84320 },
+    ];
+
+    const SCENARIOS = {
+      base: {
+        predictions: [
+          { month: 'Jun \'26', forecast: 91480, lower: 85280, upper: 97680, conf: 'High' },
+          { month: 'Jul \'26', forecast: 97320, lower: 89120, upper: 105520, conf: 'High' },
+          { month: 'Aug \'26', forecast: 103160, lower: 92960, upper: 113360, conf: 'Med' },
+          { month: 'Sep \'26', forecast: 109000, lower: 96800, upper: 121200, conf: 'Med' },
+          { month: 'Oct \'26', forecast: 114840, lower: 99440, upper: 130240, conf: 'Med' },
+          { month: 'Nov \'26', forecast: 120680, lower: 104480, upper: 136880, conf: 'Low' },
+        ],
+        kpi1: '$91,480', kpi2: '$298,400', title: 'Base Scenario — Linear Regression Projection'
+      },
+      optimistic: {
+        predictions: [
+          { month: 'Jun \'26', forecast: 98200, lower: 91000, upper: 105400, conf: 'High' },
+          { month: 'Jul \'26', forecast: 106400, lower: 97200, upper: 115600, conf: 'High' },
+          { month: 'Aug \'26', forecast: 114600, lower: 103400, upper: 125800, conf: 'Med' },
+          { month: 'Sep \'26', forecast: 122800, lower: 109600, upper: 136000, conf: 'Med' },
+          { month: 'Oct \'26', forecast: 131000, lower: 115800, upper: 146200, conf: 'Med' },
+          { month: 'Nov \'26', forecast: 139200, lower: 122000, upper: 156400, conf: 'Low' },
+        ],
+        kpi1: '$98,200', kpi2: '$342,800', title: 'Optimistic Scenario — +15% Growth Assumption'
+      },
+      pessimistic: {
+        predictions: [
+          { month: 'Jun \'26', forecast: 82600, lower: 77400, upper: 87800, conf: 'High' },
+          { month: 'Jul \'26', forecast: 86200, lower: 79000, upper: 93400, conf: 'High' },
+          { month: 'Aug \'26', forecast: 89800, lower: 80600, upper: 99000, conf: 'Med' },
+          { month: 'Sep \'26', forecast: 93400, lower: 82200, upper: 104600, conf: 'Med' },
+          { month: 'Oct \'26', forecast: 97000, lower: 83800, upper: 110200, conf: 'Med' },
+          { month: 'Nov \'26', forecast: 100600, lower: 85400, upper: 115800, conf: 'Low' },
+        ],
+        kpi1: '$82,600', kpi2: '$283,200', title: 'Pessimistic Scenario — Seasonal Headwinds'
+      }
+    };
+
+    let activeScenario = 'base';
+    let forecastChart, residualChart;
+
+    const TT = { backgroundColor: 'rgba(8,12,26,0.97)', borderColor: 'rgba(139,92,246,0.2)', borderWidth: 1, titleColor: '#d4dcf0', bodyColor: '#4a5670', padding: 13, cornerRadius: 10 };
+
+    /* ═══ MAIN FORECAST CHART ═══ */
+    function buildForecastChart() {
+      const sc = SCENARIOS[activeScenario];
+      const ctx = document.getElementById('forecastChart').getContext('2d');
+
+      // Build unified label array: historical + forecast
+      const histLabels = HISTORICAL.map(h => h.label);
+      const foreLabels = sc.predictions.map(p => p.month);
+      const allLabels = [...histLabels, ...foreLabels];
+      const n = histLabels.length;
+
+      // Actual line: historical values then null
+      const actualData = [...HISTORICAL.map(h => h.v), ...Array(foreLabels.length).fill(null)];
+
+      // Forecast line: null for history, then predictions
+      const foreData = [...Array(n - 1).fill(null), HISTORICAL[n - 1].v, ...sc.predictions.map(p => p.forecast)];
+
+      // Confidence band upper/lower (null for historical)
+      const upperData = [...Array(n).fill(null), ...sc.predictions.map(p => p.upper)];
+      const lowerData = [...Array(n).fill(null), ...sc.predictions.map(p => p.lower)];
+
+      // Gradient for actual
+      const gradActual = ctx.createLinearGradient(0, 0, 0, 320);
+      gradActual.addColorStop(0, 'rgba(6,182,212,0.25)');
+      gradActual.addColorStop(1, 'rgba(6,182,212,0.01)');
+
+      // Gradient for upper band
+      const gradBand = ctx.createLinearGradient(0, 0, 0, 320);
+      gradBand.addColorStop(0, 'rgba(139,92,246,0.14)');
+      gradBand.addColorStop(1, 'rgba(139,92,246,0.03)');
+
+      if (forecastChart) forecastChart.destroy();
+      forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: allLabels,
+          datasets: [
+            // Upper confidence band (fill to lower)
+            {
+              label: 'Upper Band', data: upperData,
+              borderColor: 'transparent', backgroundColor: gradBand,
+              fill: '+1', pointRadius: 0, tension: 0.4, order: 4,
+            },
+            // Lower confidence band
+            {
+              label: 'Lower Band', data: lowerData,
+              borderColor: 'rgba(139,92,246,0.15)', backgroundColor: 'transparent',
+              fill: false, pointRadius: 0, tension: 0.4, borderWidth: 1, borderDash: [2, 3], order: 5,
+            },
+            // Actual (historical)
+            {
+              label: 'Actual Revenue', data: actualData,
+              borderColor: '#06b6d4', backgroundColor: gradActual,
+              fill: true, tension: 0.42, pointRadius: 4,
+              pointBackgroundColor: '#06b6d4', pointHoverRadius: 7, borderWidth: 2.5, order: 1,
+            },
+            // Forecast line
+            {
+              label: 'AI Forecast', data: foreData,
+              borderColor: '#a78bfa', backgroundColor: 'transparent',
+              fill: false, tension: 0.42, pointRadius: 5,
+              pointBackgroundColor: '#a78bfa', pointStyle: 'rectRot', pointHoverRadius: 8,
+              borderWidth: 2.5, borderDash: [7, 4], order: 2,
+            },
+            // Vertical divider — single point at boundary
+            {
+              label: 'Boundary', data: HISTORICAL.map((_, i) => i === n - 1 ? HISTORICAL[n - 1].v : null).concat(Array(foreLabels.length).fill(null)),
+              borderColor: 'rgba(255,255,255,0.2)', backgroundColor: 'transparent',
+              fill: false, pointRadius: 0, borderWidth: 1, borderDash: [3, 3], order: 3,
+            },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          animation: { duration: 700, easing: 'easeInOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              ...TT,
+              callbacks: {
+                label: c => {
+                  if (c.dataset.label === 'Boundary' || c.dataIndex < n - 1 && c.dataset.label !== 'Actual Revenue') return null;
+                  const pfx = c.dataset.label === 'Upper Band' ? 'Upper: ' : c.dataset.label === 'Lower Band' ? 'Lower: ' : c.dataset.label === 'Actual Revenue' ? 'Actual: ' : c.dataset.label === 'AI Forecast' ? '🤖 Forecast: ' : null;
+                  if (!pfx || c.parsed.y === null) return null;
+                  return ` ${pfx}$${c.parsed.y.toLocaleString()}`;
+                },
+                filter: item => item.parsed.y !== null && item.dataset.label !== 'Boundary'
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#4a5670', font: { size: 10 }, maxTicksLimit: 12, maxRotation: 0 } },
+            y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.035)' }, ticks: { color: '#4a5670', font: { size: 11 }, callback: v => '$' + (v / 1000).toFixed(0) + 'k' } }
+          }
+        }
+      });
+    }
+
+    /* ═══ RESIDUAL CHART ═══ */
+    function buildResidual() {
+      const ctx = document.getElementById('residualChart').getContext('2d');
+      if (residualChart) residualChart.destroy();
+      const residuals = [-1840, 2210, -890, 3100, -2050, 1780, -3200, 2640, -1120, 980, -2400, 1650, -760, 2180, -1340, 2950];
+      const colors = residuals.map(v => v >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(244,63,94,0.65)');
+      residualChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: residuals.map((_, i) => i + 1), datasets: [{ data: residuals, backgroundColor: colors, borderRadius: 3 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { ...TT, callbacks: { label: c => ` Residual: $${c.parsed.y.toLocaleString()}` } } },
+          scales: {
+            x: { display: false },
+            y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#4a5670', font: { size: 9 }, callback: v => '$' + (v / 1000).toFixed(1) + 'k' } }
+          }
+        }
+      });
+    }
+
+    /* ═══ PREDICTION TABLE ═══ */
+    function buildPredTable() {
+      const sc = SCENARIOS[activeScenario];
+      const confColor = { High: 'badge-green', Med: 'badge-amber', Low: 'badge-violet' };
+      document.getElementById('predTable').innerHTML = sc.predictions.map(p => `
+    <tr>
+      <td>
+        <div class="forecast-cell">
+          <div class="forecast-dot" style="background:var(--violet);"></div>
+          <span style="font-weight:500;">${p.month}</span>
+        </div>
+      </td>
+      <td style="font-family:var(--font-head);font-weight:700;color:var(--violet);">$${p.forecast.toLocaleString()}</td>
+      <td style="color:var(--text-sub);font-size:11px;">$${p.lower.toLocaleString()}</td>
+      <td style="color:var(--text-sub);font-size:11px;">$${p.upper.toLocaleString()}</td>
+      <td><span class="badge ${confColor[p.conf] || 'badge-violet'}">${p.conf}</span></td>
+    </tr>`).join('');
+    }
+
+    /* ═══ SCENARIO SWITCH ═══ */
+    function setScenario(sc, btn) {
+      activeScenario = sc;
+      document.querySelectorAll('.sc-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const d = SCENARIOS[sc];
+      document.getElementById('kpi1').textContent = d.kpi1;
+      document.getElementById('kpi2').textContent = d.kpi2;
+      document.getElementById('chartTitle').textContent = d.title;
+      buildForecastChart();
+      buildPredTable();
+    }
+
+    /* ═══ RUN MODEL ANIMATION ═══ */
+    function runModel() {
+      const btn = document.getElementById('runBtn');
+      btn.classList.add('ai-running');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 0.8s linear infinite;width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Training…';
+      document.head.insertAdjacentHTML('beforeend', '<style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>');
+      // TODO: POST /api/ai/forecast/run { historical_data: [...] }
+      setTimeout(() => {
+        btn.classList.remove('ai-running');
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run Model';
+        buildForecastChart();
+        buildPredTable();
+      }, 2200);
+    }
+
+    /* PULSE style */
+    document.head.insertAdjacentHTML('beforeend', '<style>@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,0.5)}50%{box-shadow:0 0 0 8px rgba(139,92,246,0)}}</style>');
+
+    /* INIT — fetch real data from Flask */
+fetch('http://127.0.0.1:5000/api/ai/forecast')
+  .then(res => res.json())
+  .then(data => {
+
+    // Clear and rebuild HISTORICAL from API
+    HISTORICAL.length = 0;
+    data.historical.forEach(h => {
+      HISTORICAL.push({ label: h.label, v: parseFloat(h.value) });
+    });
+
+    // Update forecast predictions from API
+    if (data.forecast && data.forecast.length > 0) {
+      SCENARIOS.base.predictions = data.forecast.map(f => {
+        const revenue = parseFloat(f.value);
+        return {
+          month: f.label,
+          forecast: Math.round(revenue),
+          lower: Math.round(revenue * 0.93),
+          upper: Math.round(revenue * 1.07),
+          conf: 'High'
+        };
+      });
+      SCENARIOS.base.kpi1 = '$' + Math.round(data.forecast[0].value).toLocaleString();
+    }
+
+    // Update KPI and R² score
+    document.getElementById('kpi1').textContent = SCENARIOS.base.kpi1;
+    document.querySelector('.ai-desc').textContent =
+      `Trained on ${data.historical.length} months of data · R² = ${data.r_squared.toFixed(3)} · Last run: Today`;
+
+    buildForecastChart();
+    buildResidual();
+    buildPredTable();
+  })
+  .catch((err) => {
+    console.log('API Error:', err);
+    buildForecastChart();
+    buildResidual();
+    buildPredTable();
+  });
+  </script>
+</body>
+
+</html>

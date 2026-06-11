@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In — SalesIQ</title>
+  <link rel="stylesheet" href="auth.css"/>
+  <style>
+    /* Login-only tweaks */
+    .form-options { margin-bottom: 22px; }
+  </style>
+</head>
+<body>
+
+<!-- Background orbs (swap class via JS for admin mode) -->
+<div class="orb orb-1" id="orb1"></div>
+<div class="orb orb-2" id="orb2"></div>
+
+<div class="auth-wrapper">
+
+  <!-- ── Left: Branding panel ── -->
+  <aside class="auth-brand" id="brandPanel">
+    <div class="brand-logo">
+      <div class="brand-logo-icon" id="logoIcon">SQ</div>
+      <span class="brand-logo-text">SalesIQ</span>
+    </div>
+
+    <div class="brand-hero">
+      <h1 class="brand-tagline" id="brandTagline">
+        Your sales data,<br/><span id="accentWord">beautifully</span><br/>visualised.
+      </h1>
+      <p class="brand-desc" id="brandDesc">
+        Track revenue, analyse trends, and forecast growth — all in one intelligent dashboard built for modern sales teams.
+      </p>
+      <div class="brand-stats">
+        <div class="stat-item">
+          <div class="stat-value">10</div>
+          <div class="stat-label">Analytics modules</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Access roles</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">AI</div>
+          <div class="stat-label">Powered insights</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decorative SVG sparkline -->
+    <svg class="brand-chart" viewBox="0 0 500 100" preserveAspectRatio="none">
+      <polyline points="0,80 50,60 100,70 160,30 220,45 280,20 340,35 400,15 460,25 500,10"
+        fill="none" stroke="white" stroke-width="2"/>
+      <polygon points="0,80 50,60 100,70 160,30 220,45 280,20 340,35 400,15 460,25 500,10 500,100 0,100"
+        fill="white" opacity="0.5"/>
+    </svg>
+
+    <p class="brand-footer">© 2026 SalesIQ — Team Project · Module 1</p>
+  </aside>
+
+  <!-- ── Right: Form panel ── -->
+  <main class="auth-form-panel">
+    <div class="auth-card">
+
+      <!-- Role switcher -->
+      <div class="role-switch">
+        <button class="role-btn active-user" id="btnUser" onclick="switchRole('user')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          User Login
+        </button>
+        <button class="role-btn" id="btnAdmin" onclick="switchRole('admin')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l8 4v5c0 5-3.5 9.3-8 10.7C7.5 21.3 4 17 4 12V7l8-4z"/>
+          </svg>
+          Admin Login
+        </button>
+      </div>
+
+      <!-- Alert box -->
+      <div class="alert alert-danger" id="alertBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="alertMsg">Invalid credentials. Please try again.</span>
+      </div>
+
+      <!-- Form heading -->
+      <div class="form-heading">
+        <h2 class="form-title" id="formTitle">Welcome back</h2>
+        <p class="form-subtitle">
+          Don't have an account?
+          <a href="register.html" id="switchLink">Create one</a>
+        </p>
+      </div>
+
+      <!-- Admin-only badge -->
+      <div id="adminBadge" style="display:none;">
+        <span class="admin-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l8 4v5c0 5-3.5 9.3-8 10.7C7.5 21.3 4 17 4 12V7l8-4z"/>
+          </svg>
+          Admin access only — authorised personnel
+        </span>
+      </div>
+
+      <!-- Login form -->
+      <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/>
+              </svg>
+            </span>
+            <input type="email" class="form-input" id="emailInput" placeholder="you@example.com" autocomplete="email" required/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" class="form-input" id="pwInput" placeholder="Enter your password" autocomplete="current-password" required/>
+            <button type="button" class="pw-toggle" onclick="togglePw('pwInput', this)" aria-label="Toggle password">
+              <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin secret key (hidden unless admin mode) -->
+        <div class="form-group" id="adminKeyGroup" style="display:none;">
+          <label class="form-label">Admin secret key</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+            </span>
+            <input type="password" class="form-input admin-focus" id="adminKeyInput" placeholder="••••••••••••" autocomplete="off"/>
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="checkbox-wrap">
+            <input type="checkbox" id="rememberMe"/> Remember me
+          </label>
+          <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-submit btn-user" id="submitBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          <span id="submitLabel">Sign in as User</span>
+        </button>
+
+      </form>
+
+      <!-- Divider -->
+      <div class="divider">or continue with demo</div>
+
+      <!-- Demo quick-fill buttons -->
+      <div style="display:flex; gap:10px;">
+        <button onclick="fillDemo('user')" style="flex:1; padding:10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-sub); font-family:var(--font-body); font-size:13px; cursor:pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--border-h)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-sub)'">
+          👤 Demo User
+        </button>
+        <button onclick="fillDemo('admin')" style="flex:1; padding:10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-sub); font-family:var(--font-body); font-size:13px; cursor:pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--border-h)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-sub)'">
+          🛡️ Demo Admin
+        </button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  /* ── State ── */
+  let currentRole = 'user';
+
+  /* ── Role switcher ── */
+  function switchRole(role) {
+    currentRole = role;
+    const isAdmin = role === 'admin';
+
+    /* Buttons */
+    document.getElementById('btnUser').className  = 'role-btn' + (isAdmin ? '' : ' active-user');
+    document.getElementById('btnAdmin').className = 'role-btn' + (isAdmin ? ' active-admin' : '');
+
+    /* Branding */
+    document.getElementById('accentWord').className    = isAdmin ? 'admin-accent' : '';
+    document.getElementById('logoIcon').className      = isAdmin ? 'brand-logo-icon admin-mode' : 'brand-logo-icon';
+    document.getElementById('brandTagline').querySelector('span').style.color = isAdmin ? 'var(--admin)' : 'var(--accent)';
+
+    document.getElementById('brandDesc').textContent = isAdmin
+      ? 'Full system access — manage users, configure modules, and oversee all sales operations across the platform.'
+      : 'Track revenue, analyse trends, and forecast growth — all in one intelligent dashboard built for modern sales teams.';
+
+    /* Orbs */
+    document.getElementById('orb1').className = isAdmin ? 'orb orb-admin-1' : 'orb orb-1';
+    document.getElementById('orb2').className = isAdmin ? 'orb orb-admin-2' : 'orb orb-2';
+
+    /* Form */
+    document.getElementById('formTitle').textContent   = isAdmin ? 'Admin sign in' : 'Welcome back';
+    document.getElementById('submitLabel').textContent = isAdmin ? 'Sign in as Admin' : 'Sign in as User';
+    document.getElementById('submitBtn').className     = 'btn-submit ' + (isAdmin ? 'btn-admin' : 'btn-user');
+    document.getElementById('adminBadge').style.display    = isAdmin ? 'block' : 'none';
+    document.getElementById('adminKeyGroup').style.display = isAdmin ? 'block' : 'none';
+    document.getElementById('forgotLink').className        = isAdmin ? 'forgot-link admin-link' : 'forgot-link';
+    document.getElementById('switchLink').className        = isAdmin ? 'admin-link' : '';
+
+    /* Input focus color */
+    document.getElementById('emailInput').className = 'form-input' + (isAdmin ? ' admin-focus' : '');
+    document.getElementById('pwInput').className    = 'form-input' + (isAdmin ? ' admin-focus' : '');
+
+    hideAlert();
+  }
+
+  /* ── Toggle password visibility ── */
+  function togglePw(id, btn) {
+    const inp = document.getElementById(id);
+    const isText = inp.type === 'text';
+    inp.type = isText ? 'password' : 'text';
+    btn.innerHTML = isText
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+  }
+
+  /* ── Alert helpers ── */
+  function showAlert(type, msg) {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert alert-' + type + ' show';
+    document.getElementById('alertMsg').textContent = msg;
+  }
+  function hideAlert() {
+    document.getElementById('alertBox').className = 'alert';
+  }
+
+  /* ── Demo quick-fill ── */
+  function fillDemo(role) {
+    if (role !== currentRole) switchRole(role);
+    document.getElementById('emailInput').value = role === 'admin' ? 'admin@salesiq.com' : 'user@salesiq.com';
+    document.getElementById('pwInput').value    = role === 'admin' ? 'Admin@1234' : 'User@1234';
+    if (role === 'admin') document.getElementById('adminKeyInput').value = 'ADMIN-SECRET-KEY';
+    hideAlert();
+  }
+
+  /* ── API base URL ── */
+  const API = 'http://127.0.0.1:5000/api';
+
+  /* ── Form submission ── */
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email    = document.getElementById('emailInput').value.trim();
+    const pw       = document.getElementById('pwInput').value;
+    const adminKey = document.getElementById('adminKeyInput').value;
+    const btn      = document.getElementById('submitBtn');
+
+    if (!email || !pw) { showAlert('danger', 'Please fill in all required fields.'); return; }
+    if (currentRole === 'admin' && !adminKey) {
+      showAlert('danger', 'Admin secret key is required.'); return;
+    }
+
+    /* Loading state */
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    document.getElementById('submitLabel').textContent = 'Signing in…';
+
+    try {
+      /* Real API call to Flask backend */
+      const res = await fetch(`${API}/auth/login`, {
+        method      : 'POST',
+        headers     : { 'Content-Type': 'application/json' },
+        credentials : 'include',
+        body        : JSON.stringify({
+          email,
+          password  : pw,
+          role      : currentRole,
+          admin_key : adminKey
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        /* Save to sessionStorage as fallback */
+        sessionStorage.setItem('salesiq_auth',       'true');
+        sessionStorage.setItem('salesiq_role',        data.role);
+        sessionStorage.setItem('salesiq_email',       data.email);
+        sessionStorage.setItem('salesiq_first_name',  data.first_name);
+        sessionStorage.setItem('salesiq_last_name',   data.last_name);
+
+        showAlert('success', `Welcome back, ${data.first_name}! Redirecting…`);
+
+        /* Redirect to saved page or dashboard */
+        const dest = sessionStorage.getItem('salesiq_redirect') || 'dashboard.html';
+        sessionStorage.removeItem('salesiq_redirect');
+        setTimeout(() => { window.location.href = dest; }, 1000);
+
+      } else {
+        showAlert('danger', data.error || 'Login failed. Please try again.');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        document.getElementById('submitLabel').textContent =
+          currentRole === 'admin' ? 'Sign in as Admin' : 'Sign in as User';
+      }
+
+    } catch (err) {
+      /* Flask offline — fallback demo check */
+      const validUser  = email === 'user@salesiq.com'  && pw === 'User@1234';
+      const validAdmin = email === 'admin@salesiq.com' && pw === 'Admin@1234'
+                         && adminKey === 'ADMIN-SECRET-KEY';
+
+      if ((currentRole === 'user' && validUser) || (currentRole === 'admin' && validAdmin)) {
+        sessionStorage.setItem('salesiq_auth',       'true');
+        sessionStorage.setItem('salesiq_role',        currentRole);
+        sessionStorage.setItem('salesiq_email',       email);
+        sessionStorage.setItem('salesiq_first_name',  currentRole === 'admin' ? 'Admin' : 'John');
+        sessionStorage.setItem('salesiq_last_name',   currentRole === 'admin' ? 'User'  : 'Doe');
+        showAlert('success', 'Login successful! (Demo mode — Flask offline)');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+      } else {
+        showAlert('danger', 'Cannot reach server. Make sure Flask is running on port 5000.');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        document.getElementById('submitLabel').textContent =
+          currentRole === 'admin' ? 'Sign in as Admin' : 'Sign in as User';
+      }
+    }
+  }
+</script>
+</body>
+</html>

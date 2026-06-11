@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SalesIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #060810;
+      --bg2: #0b0e18;
+      --bg3: #10141f;
+      --bg4: #161b28;
+      --bg5: #1c2133;
+      --border: rgba(255, 255, 255, 0.055);
+      --border-h: rgba(255, 255, 255, 0.11);
+      --text: #dde3f2;
+      --text-sub: #5e6880;
+      --text-dim: #272d3e;
+      --accent: #4f8ef7;
+      --accent-d: #2d6de0;
+      --accent-g: rgba(79, 142, 247, 0.13);
+      --green: #3ecf8e;
+      --green-g: rgba(62, 207, 142, 0.12);
+      --amber: #f0a04b;
+      --amber-g: rgba(240, 160, 75, 0.12);
+      --red: #f06070;
+      --red-g: rgba(240, 96, 112, 0.12);
+      --purple: #a78bfa;
+      --purple-g: rgba(167, 139, 250, 0.12);
+      --cyan: #22d3ee;
+      --sidebar-w: 244px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+
+    /* ── Glow orbs ── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, #0c2560 0%, transparent 70%);
+      top: -250px;
+      right: -100px;
+      opacity: 0.5;
+    }
+
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #07301c 0%, transparent 70%);
+      bottom: -150px;
+      left: 220px;
+      opacity: 0.45;
+    }
+
+    .orb-3 {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, #1a0a3a 0%, transparent 70%);
+      top: 40%;
+      left: 40%;
+      opacity: 0.3;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-name {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.2px;
+    }
+
+    .logo-version {
+      font-size: 10px;
+      color: var(--text-sub);
+      margin-top: -2px;
+    }
+
+    .nav-section {
+      padding: 14px 10px 2px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-sub);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+      margin-bottom: 1px;
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke-width: 1.8;
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--accent-g);
+      color: var(--accent);
+      font-weight: 500;
+      border: 1px solid rgba(79, 142, 247, 0.16);
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 99px;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .user-pill:hover {
+      background: var(--bg4);
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .user-info .name {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .user-info .role {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    /* ── Main ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      padding: 0 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(6, 8, 16, 0.8);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .topbar-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.2px;
+    }
+
+    .topbar-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar-date {
+      font-size: 12px;
+      color: var(--text-sub);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* period filter */
+    .period-tabs {
+      display: flex;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .period-tab {
+      padding: 5px 13px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      transition: all 0.18s;
+    }
+
+    .period-tab.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .period-tab:hover:not(.active) {
+      color: var(--text);
+    }
+
+    /* notify bell */
+    .notif-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      color: var(--text-sub);
+      transition: all 0.15s;
+    }
+
+    .notif-btn:hover {
+      color: var(--text);
+      border-color: var(--border-h);
+    }
+
+    .notif-btn svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .notif-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      border: 1.5px solid var(--bg2);
+    }
+
+    /* ── Content ── */
+    .content {
+      padding: 24px 28px 40px;
+      flex: 1;
+    }
+
+    /* ── Welcome banner ── */
+    .welcome-banner {
+      background: linear-gradient(120deg, var(--bg3) 0%, var(--bg4) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .welcome-banner::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 240px;
+      background: linear-gradient(90deg, transparent, rgba(79, 142, 247, 0.05));
+      pointer-events: none;
+    }
+
+    .welcome-text h2 {
+      font-family: var(--font-head);
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 4px;
+    }
+
+    .welcome-text p {
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .welcome-text span {
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    .welcome-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 0 rgba(62, 207, 142, 0.4);
+      animation: pulse 2s infinite;
+    }
+
+    .live-label {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(62, 207, 142, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 8px rgba(62, 207, 142, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(62, 207, 142, 0);
+      }
+    }
+
+    /* ── KPI Cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      transition: border-color 0.2s, transform 0.2s;
+      animation: fadeUp 0.45s ease both;
+    }
+
+    .kpi-card:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .kpi-card:nth-child(2) {
+      animation-delay: 0.10s;
+    }
+
+    .kpi-card:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .kpi-card:nth-child(4) {
+      animation-delay: 0.20s;
+    }
+
+    .kpi-card:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .kpi-card.blue::before {
+      background: var(--accent);
+    }
+
+    .kpi-card.green::before {
+      background: var(--green);
+    }
+
+    .kpi-card.amber::before {
+      background: var(--amber);
+    }
+
+    .kpi-card.purple::before {
+      background: var(--purple);
+    }
+
+    .kpi-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .kpi-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .kpi-icon.blue {
+      background: var(--accent-g);
+      color: var(--accent);
+    }
+
+    .kpi-icon.green {
+      background: var(--green-g);
+      color: var(--green);
+    }
+
+    .kpi-icon.amber {
+      background: var(--amber-g);
+      color: var(--amber);
+    }
+
+    .kpi-icon.purple {
+      background: var(--purple-g);
+      color: var(--purple);
+    }
+
+    .kpi-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 99px;
+    }
+
+    .kpi-delta.up {
+      background: var(--green-g);
+      color: var(--green);
+    }
+
+    .kpi-delta.down {
+      background: var(--red-g);
+      color: var(--red);
+    }
+
+    .kpi-delta svg {
+      width: 10px;
+      height: 10px;
+    }
+
+    .kpi-value {
+      font-family: var(--font-head);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    /* sparkline */
+    .kpi-spark {
+      height: 40px;
+      margin-top: 12px;
+    }
+
+    /* ── Charts row ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    /* ── Card shell ── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card:nth-child(1) {
+      animation-delay: 0.25s;
+    }
+
+    .card:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+
+    .card-head {
+      padding: 16px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.2px;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 14px 20px 18px;
+    }
+
+    /* chart type toggle */
+    .chart-toggle {
+      display: flex;
+      gap: 4px;
+    }
+
+    .ct-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all 0.15s;
+    }
+
+    .ct-btn.active {
+      background: var(--accent-g);
+      color: var(--accent);
+      border-color: rgba(79, 142, 247, 0.25);
+    }
+
+    /* legend */
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .leg-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    /* ── Bottom row ── */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* ── Top products list ── */
+    .prod-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .prod-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .prod-item:last-child {
+      border-bottom: none;
+    }
+
+    .prod-rank {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--bg3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      flex-shrink: 0;
+    }
+
+    .prod-rank.gold {
+      background: rgba(240, 160, 75, 0.15);
+      color: var(--amber);
+    }
+
+    .prod-rank.silver {
+      background: rgba(167, 139, 250, 0.12);
+      color: var(--purple);
+    }
+
+    .prod-rank.bronze {
+      background: rgba(62, 207, 142, 0.1);
+      color: var(--green);
+    }
+
+    .prod-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .prod-name-t {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .prod-cat-t {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .prod-rev {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .prod-bar-wrap {
+      width: 60px;
+    }
+
+    .prod-bar {
+      height: 3px;
+      background: var(--bg4);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .prod-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+    }
+
+    /* ── Activity feed ── */
+    .act-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .act-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .act-item:last-child {
+      border-bottom: none;
+    }
+
+    .act-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .act-icon svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .act-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .act-text {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .act-text strong {
+      font-weight: 500;
+    }
+
+    .act-time {
+      font-size: 10px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    /* ── Module quick-nav ── */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .mod-tile {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+    }
+
+    .mod-tile:hover {
+      background: var(--bg4);
+      border-color: var(--border-h);
+      transform: translateY(-1px);
+    }
+
+    .mod-tile-icon {
+      font-size: 18px;
+    }
+
+    .mod-tile-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .mod-tile-sub {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    /* ── Donut centre text ── */
+    .donut-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .donut-center {
+      position: absolute;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .donut-center-value {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .donut-center-label {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes countUp {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .charts-row {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main {
+        margin-left: 0;
+      }
+
+      .bottom-row {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .content {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="layout">
+
+    <!-- ══════════════ SIDEBAR ══════════════ -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-box">SQ</div>
+        <div>
+          <div class="logo-name">SalesIQ</div>
+          <div class="logo-version">v1.0 · Team Project</div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a class="nav-item active" href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          Dashboard
+        </a>
+        <a class="nav-item" href="sales-data.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          Sales Data
+          <span class="nav-badge">12</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Analytics</div>
+        <a class="nav-item" href="trends.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          Trends
+        </a>
+        <a class="nav-item" href="products.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>
+          Products
+        </a>
+        <a class="nav-item" href="customers.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          Customers
+        </a>
+        <a class="nav-item" href="regional.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>
+          Regional
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">AI Modules</div>
+        <a class="nav-item" href="forecasting.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          Forecasting
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+          </svg>
+          Segmentation
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <a class="nav-item" href="reports.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          Reports
+        </a>
+        <a class="nav-item" href="#" onclick="salesiqLogout(); return false;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          Logout
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar" data-auth-avatar>AD</div>
+          <div class="user-info">
+            <div class="name" data-auth-name>Admin User</div>
+            <div class="role" data-auth-role>Administrator · Full access</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ══════════════ MAIN ══════════════ -->
+    <main class="main">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">Dashboard Overview</div>
+          <div class="topbar-sub">Module 3 · KPI Summary & at-a-glance analytics</div>
+        </div>
+        <div class="topbar-right">
+          <div class="period-tabs">
+            <button class="period-tab" onclick="setPeriod('7d',this)">7D</button>
+            <button class="period-tab active" onclick="setPeriod('30d',this)">30D</button>
+            <button class="period-tab" onclick="setPeriod('90d',this)">3M</button>
+            <button class="period-tab" onclick="setPeriod('1y',this)">1Y</button>
+          </div>
+          <div class="topbar-date" id="todayDate"></div>
+          <div class="notif-btn" title="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <div class="notif-dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+
+        <!-- Welcome banner -->
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Good morning, <span data-auth-name>Admin</span> 👋</h2>
+            <p>Here's your sales summary for <span id="periodLabel">this month</span>. Revenue is tracking <span>+12.4%
+                above target</span>.</p>
+          </div>
+          <div class="welcome-right">
+            <div class="pulse-dot"></div>
+            <span class="live-label">Live data</span>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+
+          <!-- Total Revenue -->
+          <div class="kpi-card blue">
+            <div class="kpi-top">
+              <div class="kpi-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              <span class="kpi-delta up">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="19" x2="12" y2="5" />
+                  <polyline points="5 12 12 5 19 12" />
+                </svg>
+                +12.4%
+              </span>
+            </div>
+            <div class="kpi-value" id="kpiRevenue">$84,320</div>
+            <div class="kpi-label">Total Revenue</div>
+            <div class="kpi-sub">vs $75,020 last period</div>
+            <div class="kpi-spark"><canvas id="sparkRevenue"></canvas></div>
+          </div>
+
+          <!-- Total Orders -->
+          <div class="kpi-card green">
+            <div class="kpi-top">
+              <div class="kpi-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+              </div>
+              <span class="kpi-delta up">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="19" x2="12" y2="5" />
+                  <polyline points="5 12 12 5 19 12" />
+                </svg>
+                +8.1%
+              </span>
+            </div>
+            <div class="kpi-value" id="kpiOrders">2,148</div>
+            <div class="kpi-label">Total Orders</div>
+            <div class="kpi-sub">vs 1,987 last period</div>
+            <div class="kpi-spark"><canvas id="sparkOrders"></canvas></div>
+          </div>
+
+          <!-- Profit Margin -->
+          <div class="kpi-card amber">
+            <div class="kpi-top">
+              <div class="kpi-icon amber">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="20" x2="12" y2="10" />
+                  <line x1="18" y1="20" x2="18" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="16" />
+                </svg>
+              </div>
+              <span class="kpi-delta down">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <polyline points="19 12 12 19 5 12" />
+                </svg>
+                -0.8%
+              </span>
+            </div>
+            <div class="kpi-value" id="kpiMargin">34.2%</div>
+            <div class="kpi-label">Profit Margin</div>
+            <div class="kpi-sub">vs 35.0% last period</div>
+            <div class="kpi-spark"><canvas id="sparkMargin"></canvas></div>
+          </div>
+
+          <!-- Monthly Growth -->
+          <div class="kpi-card purple">
+            <div class="kpi-top">
+              <div class="kpi-icon purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                  <polyline points="17 6 23 6 23 12" />
+                </svg>
+              </div>
+              <span class="kpi-delta up">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="19" x2="12" y2="5" />
+                  <polyline points="5 12 12 5 19 12" />
+                </svg>
+                +4.0%
+              </span>
+            </div>
+            <div class="kpi-value" id="kpiGrowth">+18.7%</div>
+            <div class="kpi-label">Monthly Growth Rate</div>
+            <div class="kpi-sub">vs +14.7% last period</div>
+            <div class="kpi-spark"><canvas id="sparkGrowth"></canvas></div>
+          </div>
+
+        </div>
+
+        <!-- Charts row -->
+        <div class="charts-row">
+
+          <!-- Revenue trend -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Revenue & Orders Trend</div>
+                <div class="card-sub">Daily performance over selected period</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="chart-toggle">
+                  <button class="ct-btn active" onclick="setChartType('line',this)">Line</button>
+                  <button class="ct-btn" onclick="setChartType('bar',this)">Bar</button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-legend" style="margin-bottom:12px;">
+                <div class="leg-item">
+                  <div class="leg-dot" style="background:var(--accent)"></div>Revenue
+                </div>
+                <div class="leg-item">
+                  <div class="leg-dot" style="background:var(--green)"></div>Orders
+                </div>
+              </div>
+              <div style="position:relative;height:220px;">
+                <canvas id="revenueChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profit Donut -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Revenue by Category</div>
+                <div class="card-sub">Breakdown this period</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="donut-wrap" style="height:180px;">
+                <canvas id="donutChart"></canvas>
+                <div class="donut-center">
+                  <div class="donut-center-value">$84K</div>
+                  <div class="donut-center-label">Total</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+                <div id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom row -->
+        <div class="bottom-row">
+
+          <!-- Top products -->
+          <div class="card" style="animation-delay:0.35s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Top Products</div>
+                <div class="card-sub">By revenue this period</div>
+              </div>
+              <a href="#" style="font-size:11px;color:var(--accent);text-decoration:none;">View all →</a>
+            </div>
+            <div class="card-body">
+              <div class="prod-list" id="topProductsList"></div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card" style="animation-delay:0.4s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Recent Activity</div>
+                <div class="card-sub">Latest system events</div>
+              </div>
+              <div class="pulse-dot" style="width:6px;height:6px;"></div>
+            </div>
+            <div class="card-body">
+              <div class="act-list" id="activityList"></div>
+            </div>
+          </div>
+
+          <!-- Module Quick Nav -->
+          <div class="card" style="animation-delay:0.45s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Quick Navigation</div>
+                <div class="card-sub">Jump to any module</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="module-grid">
+                <a class="mod-tile" href="../module2-sales-data/sales-data.html">
+                  <div class="mod-tile-icon">📋</div>
+                  <div class="mod-tile-label">Sales Data</div>
+                  <div class="mod-tile-sub">M2</div>
+                </a>
+                <a class="mod-tile" href="#">
+                  <div class="mod-tile-icon">📈</div>
+                  <div class="mod-tile-label">Trends</div>
+                  <div class="mod-tile-sub">M4</div>
+                </a>
+                <a class="mod-tile" href="#">
+                  <div class="mod-tile-icon">🏆</div>
+                  <div class="mod-tile-label">Products</div>
+                  <div class="mod-tile-sub">M5</div>
+                </a>
+                <a class="mod-tile" href="#">
+                  <div class="mod-tile-icon">👥</div>
+                  <div class="mod-tile-label">Customers</div>
+                  <div class="mod-tile-sub">M6</div>
+                </a>
+                <a class="mod-tile" href="#">
+                  <div class="mod-tile-icon">🗺️</div>
+                  <div class="mod-tile-label">Regional</div>
+                  <div class="mod-tile-sub">M7</div>
+                </a>
+                <a class="mod-tile" href="#">
+                  <div class="mod-tile-icon">📄</div>
+                  <div class="mod-tile-label">Reports</div>
+                  <div class="mod-tile-sub">M8</div>
+                </a>
+                <a class="mod-tile" href="#">
+                  <div class="mod-tile-icon">🤖</div>
+                  <div class="mod-tile-label">Forecast</div>
+                  <div class="mod-tile-sub">M9 · AI</div>
+                </a>
+                <a class="mod-tile" href="#">
+                  <div class="mod-tile-icon">🧠</div>
+                  <div class="mod-tile-label">Segments</div>
+                  <div class="mod-tile-sub">M10 · AI</div>
+                </a>
+                <a class="mod-tile" href="../module1-auth/login.html">
+                  <div class="mod-tile-icon">🔐</div>
+                  <div class="mod-tile-label">Auth</div>
+                  <div class="mod-tile-sub">M1</div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ─────────────────── SCRIPTS ─────────────────── -->
+  <script>
+    /* ── Date label ── */
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    /* ── Period data sets ── */
+    const PERIODS = {
+      '7d': {
+        label: 'this week',
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        revenue: [3200, 4100, 3800, 4700, 4300, 5100, 4800],
+        orders: [78, 95, 88, 112, 101, 123, 115],
+        kpi: { revenue: '$30,000', orders: '712', margin: '35.1%', growth: '+14.2%' },
+        deltaRev: '+9.2%', deltaOrd: '+6.5%', deltaMargin: '+0.4%', deltaGrowth: '+2.1%',
+        revUp: true, ordUp: true, marginUp: true, growthUp: true,
+      },
+      '30d': {
+        label: 'this month',
+        labels: ['1', '3', '5', '7', '9', '11', '13', '15', '17', '19', '21', '23', '25', '27', '29'],
+        revenue: [1800, 2400, 2200, 3100, 2700, 3400, 3200, 3800, 3600, 4200, 4000, 4600, 4400, 5000, 5200],
+        orders: [44, 60, 55, 78, 67, 85, 80, 95, 90, 105, 100, 115, 110, 125, 130],
+        kpi: { revenue: '$84,320', orders: '2,148', margin: '34.2%', growth: '+18.7%' },
+        deltaRev: '+12.4%', deltaOrd: '+8.1%', deltaMargin: '-0.8%', deltaGrowth: '+4.0%',
+        revUp: true, ordUp: true, marginUp: false, growthUp: true,
+      },
+      '90d': {
+        label: 'last 3 months',
+        labels: ['Mar', 'Apr', 'May'],
+        revenue: [68000, 74500, 84320],
+        orders: [1720, 1980, 2148],
+        kpi: { revenue: '$226,820', orders: '5,848', margin: '33.8%', growth: '+23.9%' },
+        deltaRev: '+18.2%', deltaOrd: '+12.3%', deltaMargin: '-1.5%', deltaGrowth: '+6.8%',
+        revUp: true, ordUp: true, marginUp: false, growthUp: true,
+      },
+      '1y': {
+        label: 'this year',
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        revenue: [52000, 58000, 63000, 68000, 74500, 79000, 82000, 78000, 85000, 91000, 96000, 102000],
+        orders: [1300, 1450, 1580, 1720, 1980, 2100, 2180, 2060, 2250, 2420, 2550, 2710],
+        kpi: { revenue: '$929,500', orders: '24,300', margin: '34.5%', growth: '+28.4%' },
+        deltaRev: '+28.4%', deltaOrd: '+22.1%', deltaMargin: '+1.2%', deltaGrowth: '+9.7%',
+        revUp: true, ordUp: true, marginUp: true, growthUp: true,
+      }
+    };
+
+    let currentPeriod = '30d';
+    let mainChartType = 'line';
+    let mainChart, donutChart;
+
+    /* ── KPI Cards ── */
+    function updateKPIs(period) {
+      const d = PERIODS[period];
+      animateValue('kpiRevenue', d.kpi.revenue);
+      animateValue('kpiOrders', d.kpi.orders);
+      animateValue('kpiMargin', d.kpi.margin);
+      animateValue('kpiGrowth', d.kpi.growth);
+
+      const deltas = [
+        { id: document.querySelector('.kpi-card.blue .kpi-delta'), val: d.deltaRev, up: d.revUp },
+        { id: document.querySelector('.kpi-card.green .kpi-delta'), val: d.deltaOrd, up: d.ordUp },
+        { id: document.querySelector('.kpi-card.amber .kpi-delta'), val: d.deltaMargin, up: d.marginUp },
+        { id: document.querySelector('.kpi-card.purple .kpi-delta'), val: d.deltaGrowth, up: d.growthUp },
+      ];
+      deltas.forEach(({ id, val, up }) => {
+        if (!id) return;
+        id.className = 'kpi-delta ' + (up ? 'up' : 'down');
+        const arrow = up
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+        id.innerHTML = arrow + val;
+      });
+      document.getElementById('periodLabel').textContent = d.label;
+    }
+
+    function animateValue(id, val) {
+      const el = document.getElementById(id);
+      el.style.opacity = '0';
+      setTimeout(() => { el.textContent = val; el.style.transition = 'opacity 0.3s'; el.style.opacity = '1'; }, 120);
+    }
+
+    /* ── Sparklines ── */
+    function makeSparkline(id, data, color) {
+      const ctx = document.getElementById(id).getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 40);
+      grad.addColorStop(0, color + '33');
+      grad.addColorStop(1, color + '00');
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map((_, i) => i),
+          datasets: [{ data, borderColor: color, backgroundColor: grad, fill: true, tension: 0.4, pointRadius: 0, borderWidth: 1.5 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } }
+      });
+    }
+
+    makeSparkline('sparkRevenue', [52, 58, 63, 68, 75, 79, 82, 78, 85], '#4f8ef7');
+    makeSparkline('sparkOrders', [33, 37, 41, 44, 50, 53, 55, 52, 54], '#3ecf8e');
+    makeSparkline('sparkMargin', [35, 34.5, 35, 34.2, 34, 34.5, 34.2, 33.8, 34.2], '#f0a04b');
+    makeSparkline('sparkGrowth', [10, 12, 14, 15, 16, 17, 18, 17, 18.7], '#a78bfa');
+
+    /* ── Main revenue chart ── */
+    function buildMainChart(period, type) {
+      const d = PERIODS[period];
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      const gradRev = ctx.createLinearGradient(0, 0, 0, 220);
+      gradRev.addColorStop(0, 'rgba(79,142,247,0.25)');
+      gradRev.addColorStop(1, 'rgba(79,142,247,0.01)');
+
+      if (mainChart) mainChart.destroy();
+      mainChart = new Chart(ctx, {
+        type: type,
+        data: {
+          labels: d.labels,
+          datasets: [
+            {
+              label: 'Revenue ($)', data: d.revenue,
+              borderColor: '#4f8ef7', backgroundColor: type === 'line' ? gradRev : 'rgba(79,142,247,0.6)',
+              fill: type === 'line', tension: 0.4, pointRadius: type === 'line' ? 0 : undefined,
+              pointHoverRadius: 5, borderWidth: type === 'line' ? 2 : undefined, borderRadius: type === 'bar' ? 5 : undefined,
+              yAxisID: 'y',
+            },
+            {
+              label: 'Orders', data: d.orders,
+              borderColor: '#3ecf8e', backgroundColor: type === 'line' ? 'transparent' : 'rgba(62,207,142,0.5)',
+              fill: false, tension: 0.4, pointRadius: type === 'line' ? 0 : undefined,
+              pointHoverRadius: 5, borderWidth: type === 'line' ? 1.5 : undefined, borderDash: type === 'line' ? [5, 4] : undefined,
+              borderRadius: type === 'bar' ? 5 : undefined,
+              yAxisID: 'y1',
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(11,14,24,0.95)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+              titleColor: '#dde3f2', bodyColor: '#5e6880', padding: 12, cornerRadius: 8,
+              callbacks: { label: c => c.datasetIndex === 0 ? ` $${c.parsed.y.toLocaleString()} revenue` : ` ${c.parsed.y} orders` }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#5e6880', font: { size: 11 }, maxTicksLimit: 8 } },
+            y: {
+              position: 'left', border: { display: false },
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#5e6880', font: { size: 11 }, callback: v => '$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v) }
+            },
+            y1: {
+              position: 'right', border: { display: false },
+              grid: { display: false },
+              ticks: { color: '#5e6880', font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    /* ── Donut chart ── */
+    const CAT_COLORS = ['#4f8ef7', '#3ecf8e', '#f0a04b', '#f06070', '#a78bfa', '#22d3ee'];
+    const CAT_NAMES = ['Electronics', 'Clothing', 'Home & Living', 'Beauty', 'Sports', 'Other'];
+    const CAT_VALS = [32, 22, 18, 14, 9, 5];
+
+    function buildDonut() {
+      const ctx = document.getElementById('donutChart').getContext('2d');
+      if (donutChart) donutChart.destroy();
+      donutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: CAT_NAMES,
+          datasets: [{ data: CAT_VALS, backgroundColor: CAT_COLORS, borderWidth: 0, hoverOffset: 8 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '72%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(11,14,24,0.95)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+              titleColor: '#dde3f2', bodyColor: '#5e6880', padding: 10, cornerRadius: 8,
+              callbacks: { label: c => ` ${c.label}: ${c.parsed}%` }
+            }
+          }
+        }
+      });
+      /* Render legend */
+      document.getElementById('donutLegend').innerHTML = CAT_NAMES.map((n, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:11px;">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <div style="width:8px;height:8px;border-radius:2px;background:${CAT_COLORS[i]};flex-shrink:0;"></div>
+        <span style="color:var(--text-sub);">${n}</span>
+      </div>
+      <span style="font-weight:600;color:var(--text);">${CAT_VALS[i]}%</span>
+    </div>`).join('');
+    }
+
+    /* ── Top products ── */
+    const TOP_PRODUCTS = [
+      { name: 'Wireless Earbuds Pro', cat: 'Electronics', rev: 12480, pct: 100 },
+      { name: 'Linen Shirt — Slate', cat: 'Clothing', rev: 8910, pct: 71 },
+      { name: 'Smart LED Desk Lamp', cat: 'Home & Living', rev: 6240, pct: 50 },
+      { name: 'Vitamin C Serum', cat: 'Beauty', rev: 4995, pct: 40 },
+      { name: 'Running Shoes X3', cat: 'Sports', rev: 3740, pct: 30 },
+    ];
+    const BAR_COLORS = ['#f0a04b', '#a78bfa', '#4f8ef7', '#3ecf8e', '#f06070'];
+    const RANKS = ['gold', 'silver', 'bronze', '', ''];
+
+    document.getElementById('topProductsList').innerHTML = TOP_PRODUCTS.map((p, i) => `
+  <div class="prod-item">
+    <div class="prod-rank ${RANKS[i]}">${i + 1}</div>
+    <div class="prod-info">
+      <div class="prod-name-t">${p.name}</div>
+      <div class="prod-cat-t">${p.cat}</div>
+    </div>
+    <div class="prod-bar-wrap">
+      <div class="prod-bar"><div class="prod-bar-fill" style="width:${p.pct}%;background:${BAR_COLORS[i]};"></div></div>
+    </div>
+    <div class="prod-rev">$${p.rev.toLocaleString()}</div>
+  </div>`).join('');
+
+    /* ── Activity feed ── */
+    const ACTIVITIES = [
+      { icon: '✓', iconBg: 'var(--green-g)', iconColor: 'var(--green)', text: '<strong>Order #4821</strong> fulfilled — Wireless Earbuds Pro × 2', time: '2 minutes ago' },
+      { icon: '↑', iconBg: 'var(--accent-g)', iconColor: 'var(--accent)', text: '<strong>12 records</strong> imported via CSV bulk upload', time: '18 minutes ago' },
+      { icon: '⚠', iconBg: 'var(--amber-g)', iconColor: 'var(--amber)', text: '<strong>Smart LED Desk Lamp</strong> — only 4 units remaining', time: '43 minutes ago' },
+      { icon: '↩', iconBg: 'var(--red-g)', iconColor: 'var(--red)', text: '<strong>Refund</strong> processed for order #4809 — $59.99', time: '1 hour ago' },
+      { icon: '★', iconBg: 'var(--purple-g)', iconColor: 'var(--purple)', text: '<strong>Monthly target</strong> reached — $80K milestone hit 🎉', time: '3 hours ago' },
+    ];
+
+    document.getElementById('activityList').innerHTML = ACTIVITIES.map(a => `
+  <div class="act-item">
+    <div class="act-icon" style="background:${a.iconBg}; color:${a.iconColor}; font-size:12px; font-weight:700;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        ${a.icon === '✓' ? '<polyline points="20 6 9 17 4 12"/>'
+        : a.icon === '↑' ? '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>'
+          : a.icon === '⚠' ? '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+            : a.icon === '↩' ? '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>'
+              : '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'}
+      </svg>
+    </div>
+    <div class="act-body">
+      <div class="act-text">${a.text}</div>
+      <div class="act-time">${a.time}</div>
+    </div>
+  </div>`).join('');
+
+    /* ── Period switcher ── */
+    function setPeriod(period, btn) {
+      currentPeriod = period;
+      document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateKPIs(period);
+      buildMainChart(period, mainChartType);
+    }
+
+    /* ── Chart type toggle ── */
+    function setChartType(type, btn) {
+      mainChartType = type;
+      document.querySelectorAll('.ct-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildMainChart(currentPeriod, type);
+    }
+
+    /* ── Init ── */
+    updateKPIs('30d');
+    buildMainChart('30d', 'line');
+    buildDonut();
+  </script>
+
+  <!-- Phase 4: Auth Guard — checks session and fills user info -->
+  <script src="auth-guard.js"></script>
+</body>
+
+</html>

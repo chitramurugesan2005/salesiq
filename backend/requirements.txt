@@ -1,0 +1,10 @@
+flask
+flask-sqlalchemy
+flask-cors
+pymysql
+python-dotenv
+werkzeug
+pandas
+openpyxl
+reportlab
+scikit-learn

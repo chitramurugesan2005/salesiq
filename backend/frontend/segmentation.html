@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Customer Segmentation — SalesIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #040610;
+      --bg2: #080c1e;
+      --bg3: #0d1228;
+      --bg4: #131832;
+      --bg5: #191f3c;
+      --border: rgba(255, 255, 255, 0.055);
+      --border-h: rgba(255, 255, 255, 0.12);
+      --text: #d2dbf0;
+      --text-sub: #485070;
+      --text-dim: #181e38;
+      --pink: #ec4899;
+      --pink-g: rgba(236, 72, 153, 0.14);
+      --emerald: #10b981;
+      --emerald-g: rgba(16, 185, 129, 0.13);
+      --sky: #38bdf8;
+      --sky-g: rgba(56, 189, 248, 0.13);
+      --violet: #8b5cf6;
+      --violet-g: rgba(139, 92, 246, 0.13);
+      --amber: #f59e0b;
+      --amber-g: rgba(245, 158, 11, 0.12);
+      --c-hv: #ec4899;
+      --c-oc: #38bdf8;
+      --c-ot: #10b981;
+      --sidebar-w: 244px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(236, 72, 153, 0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(236, 72, 153, 0.022) 1px, transparent 1px);
+      background-size: 44px 44px
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0
+    }
+
+    .orb-1 {
+      width: 680px;
+      height: 680px;
+      background: radial-gradient(circle, #280a30 0%, transparent 65%);
+      top: -260px;
+      right: -100px;
+      opacity: 0.5
+    }
+
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle, #031a14 0%, transparent 70%);
+      bottom: -150px;
+      left: 180px;
+      opacity: 0.4
+    }
+
+    .orb-3 {
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, #080424 0%, transparent 70%);
+      top: 46%;
+      left: 40%;
+      opacity: 0.22
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--pink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff
+    }
+
+    .logo-name {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-sub)
+    }
+
+    .nav-section {
+      padding: 14px 10px 2px
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 4px
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-sub);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+      margin-bottom: 1px
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke-width: 1.8
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text)
+    }
+
+    .nav-item.active {
+      background: var(--pink-g);
+      color: var(--pink);
+      font-weight: 500;
+      border: 1px solid rgba(236, 72, 153, 0.2)
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid var(--border)
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      cursor: pointer
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--pink), var(--violet));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0
+    }
+
+    /* MAIN */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh
+    }
+
+    .topbar {
+      padding: 0 28px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(4, 6, 16, 0.9);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 50
+    }
+
+    .page-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.2px
+    }
+
+    .page-sub {
+      font-size: 11px;
+      color: var(--text-sub)
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+      white-space: nowrap
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text-sub);
+      border: 1px solid var(--border)
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-h)
+    }
+
+    .btn-pink {
+      background: var(--pink);
+      color: #fff;
+      font-weight: 600
+    }
+
+    .btn-pink:hover {
+      opacity: .88
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px
+    }
+
+    .content {
+      padding: 22px 28px 48px;
+      flex: 1
+    }
+
+    /* AI Banner */
+    .ai-banner {
+      background: linear-gradient(120deg, var(--bg3), var(--bg4));
+      border: 1px solid rgba(236, 72, 153, 0.22);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.35s ease both
+    }
+
+    .ai-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--pink), var(--sky))
+    }
+
+    .ai-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 80% 50%, rgba(236, 72, 153, 0.05), transparent 60%);
+      pointer-events: none
+    }
+
+    .ai-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .ai-icon-wrap {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: var(--pink-g);
+      border: 1px solid rgba(236, 72, 153, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px
+    }
+
+    .ai-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 3px
+    }
+
+    .ai-desc {
+      font-size: 12px;
+      color: var(--text-sub)
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--pink-g);
+      color: var(--pink);
+      border: 1px solid rgba(236, 72, 153, 0.25);
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 14px
+    }
+
+    .ai-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--pink);
+      animation: pulse 2s infinite
+    }
+
+    /* Cluster KPI cards */
+    .cluster-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px
+    }
+
+    .cluster-card {
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.42s ease both;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: default
+    }
+
+    .cluster-card:nth-child(1) {
+      animation-delay: .05s
+    }
+
+    .cluster-card:nth-child(2) {
+      animation-delay: .1s
+    }
+
+    .cluster-card:nth-child(3) {
+      animation-delay: .15s
+    }
+
+    .cluster-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35)
+    }
+
+    .cluster-card.hv {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(236, 72, 153, 0.04));
+      border: 1px solid rgba(236, 72, 153, 0.25)
+    }
+
+    .cluster-card.oc {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(56, 189, 248, 0.04));
+      border: 1px solid rgba(56, 189, 248, 0.25)
+    }
+
+    .cluster-card.ot {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.04));
+      border: 1px solid rgba(16, 185, 129, 0.25)
+    }
+
+    .cluster-badge-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px
+    }
+
+    .cluster-emoji {
+      font-size: 26px
+    }
+
+    .cluster-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 99px;
+      letter-spacing: 0.04em
+    }
+
+    .cluster-name {
+      font-family: var(--font-head);
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 5px
+    }
+
+    .cluster-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.55;
+      margin-bottom: 14px
+    }
+
+    .cluster-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px
+    }
+
+    .cs-val {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.4px
+    }
+
+    .cs-lbl {
+      font-size: 9px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 1px
+    }
+
+    .cluster-prog {
+      height: 3px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.07);
+      margin-top: 14px;
+      overflow: hidden
+    }
+
+    .cluster-prog-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.9s cubic-bezier(0.34, 1.2, 0.64, 1)
+    }
+
+    /* Main 2-col */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px
+    }
+
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.48s ease both
+    }
+
+    .card-head {
+      padding: 18px 20px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between
+    }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 2px
+    }
+
+    .card-body {
+      padding: 14px 20px 20px
+    }
+
+    /* scatter legend */
+    .scatter-legend {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 12px
+    }
+
+    .sl-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-sub)
+    }
+
+    .sl-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .sl-cent {
+      width: 12px;
+      height: 12px;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+      flex-shrink: 0
+    }
+
+    /* axis toggle */
+    .axis-tabs {
+      display: flex;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px
+    }
+
+    .ax-tab {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      transition: all 0.16s
+    }
+
+    .ax-tab.active {
+      background: var(--bg4);
+      color: var(--text);
+      border: 1px solid var(--border-h)
+    }
+
+    /* bottom 3-col */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px
+    }
+
+    /* profile table */
+    .prof-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px
+    }
+
+    .prof-table th {
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .prof-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle
+    }
+
+    .prof-table tr:last-child td {
+      border-bottom: none
+    }
+
+    .prof-table tbody tr:hover {
+      background: var(--bg3)
+    }
+
+    /* model metrics */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px
+    }
+
+    .metric-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 13px;
+      text-align: center
+    }
+
+    .metric-val {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 3px
+    }
+
+    .metric-lbl {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.06em
+    }
+
+    /* k config */
+    .k-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .k-row:last-child {
+      border-bottom: none
+    }
+
+    .k-key {
+      font-size: 11px;
+      color: var(--text-sub)
+    }
+
+    .k-val {
+      font-size: 12px;
+      font-weight: 600
+    }
+
+    /* badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600
+    }
+
+    .b-pink {
+      background: var(--pink-g);
+      color: var(--pink);
+      border: 1px solid rgba(236, 72, 153, 0.22)
+    }
+
+    .b-sky {
+      background: var(--sky-g);
+      color: var(--sky);
+      border: 1px solid rgba(56, 189, 248, 0.22)
+    }
+
+    .b-emerald {
+      background: var(--emerald-g);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.22)
+    }
+
+    .b-violet {
+      background: var(--violet-g);
+      color: var(--violet);
+      border: 1px solid rgba(139, 92, 246, 0.22)
+    }
+
+    .b-amber {
+      background: var(--amber-g);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.22)
+    }
+
+    /* insight chips */
+    .insight-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      animation: fadeUp 0.5s ease 0.46s both
+    }
+
+    .i-chip {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: all 0.2s
+    }
+
+    .i-chip:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px)
+    }
+
+    .i-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0
+    }
+
+    .i-icon svg {
+      width: 17px;
+      height: 17px
+    }
+
+    .i-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px
+    }
+
+    .i-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.55
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.5)
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px rgba(236, 72, 153, 0)
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0)
+      }
+
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes aiPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.5)
+      }
+
+      50% {
+        box-shadow: 0 0 0 10px rgba(236, 72, 153, 0)
+      }
+    }
+
+    .ai-running {
+      animation: aiPulse 1.4s infinite
+    }
+
+    @media(max-width:1100px) {
+      .main-grid {
+        grid-template-columns: 1fr
+      }
+
+      ;
+
+      .bottom-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      ;
+
+      .cluster-strip {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media(max-width:900px) {
+      .sidebar {
+        transform: translateX(-100%)
+      }
+
+      ;
+
+      .main {
+        margin-left: 0
+      }
+
+      ;
+
+      .content {
+        padding: 14px
+      }
+
+      ;
+
+      .bottom-grid {
+        grid-template-columns: 1fr
+      }
+
+      ;
+
+      .insight-row {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-box">SQ</div>
+        <div>
+          <div class="logo-name">SalesIQ</div>
+          <div class="logo-sub">v1.0 · Team Project</div>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a class="nav-item" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>Dashboard</a>
+        <a class="nav-item" href="sales-data.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+          </svg>Sales Data</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Analytics</div>
+        <a class="nav-item" href="trends.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>Trends</a>
+        <a class="nav-item" href="products.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>Products</a>
+        <a class="nav-item" href="customers.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>Customers</a>
+        <a class="nav-item" href="regional.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>Regional</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">AI Modules</div>
+        <a class="nav-item" href="forecasting.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>Forecasting</a>
+        <a class="nav-item active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+          </svg>Segmentation</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <a class="nav-item" href="reports.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>Reports</a>
+        <a class="nav-item" href="login.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>Logout</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar">AD</div>
+          <div>
+            <div style="font-size:12px;font-weight:500;">Admin User</div>
+            <div style="font-size:10px;color:var(--text-sub);">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="page-title">AI Customer Segmentation</div>
+          <div class="page-sub">Module 10 · K-Means Clustering · Scikit-learn · Unsupervised Machine Learning</div>
+        </div>
+        <div class="topbar-right">
+          <div class="axis-tabs" id="axisTabs">
+            <button class="ax-tab active" onclick="setAxis('spend-freq',this)">Spend vs Freq</button>
+            <button class="ax-tab" onclick="setAxis('spend-orders',this)">Spend vs Orders</button>
+            <button class="ax-tab" onclick="setAxis('freq-ltv',this)">Freq vs LTV</button>
+          </div>
+          <button class="btn btn-pink btn-sm" id="runBtn" onclick="runClustering()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Run K-Means
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- AI Banner -->
+        <div class="ai-banner">
+          <div class="ai-banner-left">
+            <div class="ai-icon-wrap">🧠</div>
+            <div>
+              <div class="ai-title">K-Means Clustering · K=3 · Scikit-learn 1.4.2</div>
+              <div class="ai-desc">Trained on 4,820 customers · Features: purchase frequency, avg spend, total orders,
+                LTV · Silhouette Score = 0.74 · Last run: Today 10:15 AM</div>
+            </div>
+          </div>
+          <div class="ai-badge">
+            <div class="ai-badge-dot"></div>Clusters Ready
+          </div>
+        </div>
+
+        <!-- Cluster Cards -->
+        <div class="cluster-strip">
+          <div class="cluster-card hv">
+            <div class="cluster-badge-wrap">
+              <span class="cluster-emoji">💎</span>
+              <span class="cluster-badge"
+                style="background:var(--pink-g);color:var(--pink);border:1px solid rgba(236,72,153,0.25);">Cluster 0 ·
+                High Value</span>
+            </div>
+            <div class="cluster-name" style="color:var(--pink);">Champions</div>
+            <div class="cluster-desc">Frequent buyers with the highest spend per order. Drive 42% of total revenue from
+              just 18% of the customer base. Strongest LTV and loyalty indicators.</div>
+            <div class="cluster-stats">
+              <div>
+                <div class="cs-val" style="color:var(--pink);">864</div>
+                <div class="cs-lbl">Customers</div>
+              </div>
+              <div>
+                <div class="cs-val" style="color:var(--pink);">$520</div>
+                <div class="cs-lbl">Avg Spend</div>
+              </div>
+              <div>
+                <div class="cs-val" style="color:var(--pink);">8.4x</div>
+                <div class="cs-lbl">Freq/Qtr</div>
+              </div>
+            </div>
+            <div class="cluster-prog">
+              <div class="cluster-prog-fill" id="cpf0" style="background:var(--pink);width:0%"></div>
+            </div>
+          </div>
+          <div class="cluster-card oc">
+            <div class="cluster-badge-wrap">
+              <span class="cluster-emoji">🛒</span>
+              <span class="cluster-badge"
+                style="background:var(--sky-g);color:var(--sky);border:1px solid rgba(56,189,248,0.25);">Cluster 1 ·
+                Occasional</span>
+            </div>
+            <div class="cluster-name" style="color:var(--sky);">Regular Buyers</div>
+            <div class="cluster-desc">Moderate spenders who purchase 2–4 times per quarter. Mid-tier LTV with good
+              engagement rates. Strong candidates for upsell and bundle campaigns.</div>
+            <div class="cluster-stats">
+              <div>
+                <div class="cs-val" style="color:var(--sky);">2,146</div>
+                <div class="cs-lbl">Customers</div>
+              </div>
+              <div>
+                <div class="cs-val" style="color:var(--sky);">$185</div>
+                <div class="cs-lbl">Avg Spend</div>
+              </div>
+              <div>
+                <div class="cs-val" style="color:var(--sky);">2.8x</div>
+                <div class="cs-lbl">Freq/Qtr</div>
+              </div>
+            </div>
+            <div class="cluster-prog">
+              <div class="cluster-prog-fill" id="cpf1" style="background:var(--sky);width:0%"></div>
+            </div>
+          </div>
+          <div class="cluster-card ot">
+            <div class="cluster-badge-wrap">
+              <span class="cluster-emoji">👤</span>
+              <span class="cluster-badge"
+                style="background:var(--emerald-g);color:var(--emerald);border:1px solid rgba(16,185,129,0.25);">Cluster
+                2 · One-Time</span>
+            </div>
+            <div class="cluster-name" style="color:var(--emerald);">Single Purchasers</div>
+            <div class="cluster-desc">Bought once and haven't returned. Largest group by count. Low LTV but highest
+              win-back potential. Respond well to re-engagement sequences.</div>
+            <div class="cluster-stats">
+              <div>
+                <div class="cs-val" style="color:var(--emerald);">1,810</div>
+                <div class="cs-lbl">Customers</div>
+              </div>
+              <div>
+                <div class="cs-val" style="color:var(--emerald);">$62</div>
+                <div class="cs-lbl">Avg Spend</div>
+              </div>
+              <div>
+                <div class="cs-val" style="color:var(--emerald);">1.0x</div>
+                <div class="cs-lbl">Freq/Qtr</div>
+              </div>
+            </div>
+            <div class="cluster-prog">
+              <div class="cluster-prog-fill" id="cpf2" style="background:var(--emerald);width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main grid: scatter + elbow -->
+        <div class="main-grid">
+
+          <!-- Scatter plot -->
+          <div class="card" style="animation-delay:0.2s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">K-Means Scatter Plot</div>
+                <div class="card-sub" id="scatterSub">Purchase Frequency vs Avg Spend · 4,820 customers · K=3 clusters
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="scatter-legend">
+                <div class="sl-item">
+                  <div class="sl-dot" style="background:var(--pink);"></div>Champions (C0)
+                </div>
+                <div class="sl-item">
+                  <div class="sl-dot" style="background:var(--sky);"></div>Regular (C1)
+                </div>
+                <div class="sl-item">
+                  <div class="sl-dot" style="background:var(--emerald);"></div>One-Time (C2)
+                </div>
+                <div class="sl-item">
+                  <div
+                    style="width:12px;height:12px;background:rgba(255,255,255,0.9);clip-path:polygon(50% 0%,100% 100%,0% 100%);">
+                  </div>Centroids
+                </div>
+              </div>
+              <div style="position:relative;height:310px;"><canvas id="scatterChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Elbow chart + silhouette -->
+          <div class="card" style="animation-delay:0.26s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Optimal K — Elbow Method</div>
+                <div class="card-sub">Within-cluster sum of squares (WCSS) vs K</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="position:relative;height:180px;margin-bottom:16px;"><canvas id="elbowChart"></canvas></div>
+              <div
+                style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:12px;">
+                <div style="font-size:28px;">📐</div>
+                <div>
+                  <div
+                    style="font-size:11px;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-bottom:3px;">
+                    Silhouette Score</div>
+                  <div style="font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--pink);">0.74</div>
+                  <div style="font-size:11px;color:var(--text-sub);">Good cluster separation · K=3 is optimal</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom 3-col -->
+        <div class="bottom-grid">
+
+          <!-- Cluster profile table -->
+          <div class="card" style="animation-delay:0.32s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Cluster Profile Summary</div>
+                <div class="card-sub">Feature means per cluster</div>
+              </div>
+              <span class="badge b-pink">K-Means Output</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="prof-table">
+                <thead>
+                  <tr>
+                    <th>Cluster</th>
+                    <th>Customers</th>
+                    <th>Avg Spend</th>
+                    <th>Avg Orders</th>
+                    <th>LTV</th>
+                    <th>Churn Risk</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="badge b-pink">💎 Champions</span></td>
+                    <td style="font-weight:600;">864</td>
+                    <td style="color:var(--pink);font-weight:700;">$520</td>
+                    <td>8.4</td>
+                    <td style="font-weight:600;">$4,368</td>
+                    <td><span class="badge b-emerald">Low</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge b-sky">🛒 Regular</span></td>
+                    <td style="font-weight:600;">2,146</td>
+                    <td style="color:var(--sky);font-weight:700;">$185</td>
+                    <td>2.8</td>
+                    <td style="font-weight:600;">$518</td>
+                    <td><span class="badge b-amber">Medium</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge b-emerald">👤 One-Time</span></td>
+                    <td style="font-weight:600;">1,810</td>
+                    <td style="color:var(--emerald);font-weight:700;">$62</td>
+                    <td>1.0</td>
+                    <td style="font-weight:600;">$62</td>
+                    <td><span class="badge"
+                        style="background:var(--pink-g);color:var(--pink);border:1px solid rgba(236,72,153,0.22);">High</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Model config -->
+          <div class="card" style="animation-delay:0.38s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Model Configuration</div>
+                <div class="card-sub">Scikit-learn KMeans params</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="metric-grid" style="margin-bottom:14px;">
+                <div class="metric-box">
+                  <div class="metric-val" style="color:var(--pink);">3</div>
+                  <div class="metric-lbl">K clusters</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-val" style="color:var(--sky);">0.74</div>
+                  <div class="metric-lbl">Silhouette</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-val" style="color:var(--emerald);">14</div>
+                  <div class="metric-lbl">Iterations</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-val" style="color:var(--violet);">4,820</div>
+                  <div class="metric-lbl">Samples</div>
+                </div>
+              </div>
+              <div>
+                <div class="k-row"><span class="k-key">Algorithm</span><span class="k-val"><span
+                      class="badge b-pink">KMeans</span></span></div>
+                <div class="k-row"><span class="k-key">Init Method</span><span class="k-val">k-means++</span></div>
+                <div class="k-row"><span class="k-key">Max Iterations</span><span class="k-val">300</span></div>
+                <div class="k-row"><span class="k-key">Tolerance</span><span class="k-val">0.0001</span></div>
+                <div class="k-row"><span class="k-key">Features Used</span><span class="k-val">4 (scaled)</span></div>
+                <div class="k-row"><span class="k-key">Scaler</span><span class="k-val">StandardScaler</span></div>
+                <div class="k-row"><span class="k-key">Random State</span><span class="k-val">42</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Revenue by cluster donut -->
+          <div class="card" style="animation-delay:0.44s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Revenue Contribution</div>
+                <div class="card-sub">Total revenue share per cluster</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="position:relative;display:flex;align-items:center;justify-content:center;height:180px;">
+                <canvas id="clusterDonut"></canvas>
+                <div style="position:absolute;text-align:center;">
+                  <div style="font-family:var(--font-head);font-size:20px;font-weight:800;">$84K</div>
+                  <div style="font-size:10px;color:var(--text-sub);">Total Rev</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px;margin-top:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">
+                  <div style="display:flex;align-items:center;gap:7px;">
+                    <div style="width:9px;height:9px;border-radius:3px;background:var(--pink);"></div><span
+                      style="color:var(--text-sub);">💎 Champions</span>
+                  </div>
+                  <span style="font-weight:700;">42% · $35,280</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">
+                  <div style="display:flex;align-items:center;gap:7px;">
+                    <div style="width:9px;height:9px;border-radius:3px;background:var(--sky);"></div><span
+                      style="color:var(--text-sub);">🛒 Regular</span>
+                  </div>
+                  <span style="font-weight:700;">45% · $37,800</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">
+                  <div style="display:flex;align-items:center;gap:7px;">
+                    <div style="width:9px;height:9px;border-radius:3px;background:var(--emerald);"></div><span
+                      style="color:var(--text-sub);">👤 One-Time</span>
+                  </div>
+                  <span style="font-weight:700;">13% · $11,220</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Insights -->
+        <div class="insight-row">
+          <div class="i-chip">
+            <div class="i-icon" style="background:var(--pink-g);color:var(--pink);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">Champion Cluster ROI</div>
+              <div class="i-desc">864 Champions (18% of base) generate <strong style="color:var(--pink);">42% of
+                  revenue</strong>. A 10% increase in this cluster's size would add an estimated <strong
+                  style="color:var(--pink);">$42K/quarter</strong> without acquiring new customers.</div>
+            </div>
+          </div>
+          <div class="i-chip">
+            <div class="i-icon" style="background:var(--sky-g);color:var(--sky);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">Upgrade Opportunity</div>
+              <div class="i-desc">The Regular cluster (2,146 customers) sits closest to Champions in feature space.
+                Moving just <strong style="color:var(--sky);">15% of them</strong> to high-value behavior could unlock
+                <strong style="color:var(--sky);">$50K+</strong> in additional quarterly revenue.</div>
+            </div>
+          </div>
+          <div class="i-chip">
+            <div class="i-icon" style="background:var(--emerald-g);color:var(--emerald);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">Win-Back Targeting</div>
+              <div class="i-desc">1,810 One-Time buyers are precisely identified by K-Means. A personalised
+                re-engagement email campaign targeting this cluster could recover <strong
+                  style="color:var(--emerald);">$112K</strong> in dormant revenue.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /* ═══ SCATTER DATA GENERATION ═══ */
+    function genCluster(n, cx, cy, sx, sy, color) {
+      return Array.from({ length: n }, () => ({
+        x: cx + (Math.random() - 0.5) * 2 * sx,
+        y: cy + (Math.random() - 0.5) * 2 * sy,
+      }));
+    }
+
+    const AXES = {
+      'spend-freq': {
+        xLabel: 'Purchase Frequency (per quarter)', yLabel: 'Avg Spend ($)', sub: 'Purchase Frequency vs Avg Spend · 4,820 customers · K=3 clusters',
+        c0: genCluster(120, 8.4, 520, 2.2, 80, ''), c1: genCluster(300, 2.8, 185, 1.2, 55, ''), c2: genCluster(250, 1.0, 62, 0.3, 20, ''),
+        cent0: { x: 8.4, y: 520 }, cent1: { x: 2.8, y: 185 }, cent2: { x: 1.0, y: 62 }
+      },
+      'spend-orders': {
+        xLabel: 'Total Orders (all time)', yLabel: 'Avg Spend ($)', sub: 'Total Orders vs Avg Spend · 4,820 customers · K=3 clusters',
+        c0: genCluster(120, 42, 520, 12, 80, ''), c1: genCluster(300, 14, 185, 6, 55, ''), c2: genCluster(250, 3, 62, 1.5, 20, ''),
+        cent0: { x: 42, y: 520 }, cent1: { x: 14, y: 185 }, cent2: { x: 3, y: 62 }
+      },
+      'freq-ltv': {
+        xLabel: 'Purchase Frequency (per quarter)', yLabel: 'Lifetime Value ($)', sub: 'Purchase Frequency vs LTV · 4,820 customers · K=3 clusters',
+        c0: genCluster(120, 8.4, 4368, 2.2, 600, ''), c1: genCluster(300, 2.8, 518, 1.2, 120, ''), c2: genCluster(250, 1.0, 62, 0.3, 15, ''),
+        cent0: { x: 8.4, y: 4368 }, cent1: { x: 2.8, y: 518 }, cent2: { x: 1.0, y: 62 }
+      },
+    };
+
+    let scatterChart, elbowChart, donutChart, activeAxis = 'spend-freq';
+
+    const TT = { backgroundColor: 'rgba(4,6,16,0.97)', borderColor: 'rgba(236,72,153,0.2)', borderWidth: 1, titleColor: '#d2dbf0', bodyColor: '#485070', padding: 12, cornerRadius: 10 };
+
+    /* ═══ SCATTER CHART ═══ */
+    function buildScatter() {
+      const ctx = document.getElementById('scatterChart').getContext('2d');
+      const ax = AXES[activeAxis];
+      if (scatterChart) scatterChart.destroy();
+      scatterChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            { label: 'Champions (C0)', data: ax.c0, backgroundColor: 'rgba(236,72,153,0.55)', pointRadius: 4, pointHoverRadius: 7 },
+            { label: 'Regular (C1)', data: ax.c1, backgroundColor: 'rgba(56,189,248,0.45)', pointRadius: 3.5, pointHoverRadius: 6 },
+            { label: 'One-Time (C2)', data: ax.c2, backgroundColor: 'rgba(16,185,129,0.45)', pointRadius: 3, pointHoverRadius: 6 },
+            { label: 'Centroid C0', data: [ax.cent0], backgroundColor: 'rgba(236,72,153,1)', pointStyle: 'triangle', pointRadius: 10, pointHoverRadius: 14 },
+            { label: 'Centroid C1', data: [ax.cent1], backgroundColor: 'rgba(56,189,248,1)', pointStyle: 'triangle', pointRadius: 10, pointHoverRadius: 14 },
+            { label: 'Centroid C2', data: [ax.cent2], backgroundColor: 'rgba(16,185,129,1)', pointStyle: 'triangle', pointRadius: 10, pointHoverRadius: 14 },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 600, easing: 'easeInOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              ...TT, callbacks: {
+                label: c => {
+                  if (c.datasetIndex >= 3) return ` ★ Centroid: (${c.parsed.x.toFixed(1)}, ${c.parsed.y.toFixed(0)})`;
+                  const names = ['Champion', 'Regular Buyer', 'One-Time Buyer'];
+                  return ` ${names[c.datasetIndex]}: (${c.parsed.x.toFixed(1)}, $${c.parsed.y.toFixed(0)})`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.035)' }, border: { display: false }, ticks: { color: '#485070', font: { size: 10 } }, title: { display: true, text: ax.xLabel, color: '#485070', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.035)' }, border: { display: false }, ticks: { color: '#485070', font: { size: 10 } }, title: { display: true, text: ax.yLabel, color: '#485070', font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    /* ═══ ELBOW CHART ═══ */
+    function buildElbow() {
+      const ctx = document.getElementById('elbowChart').getContext('2d');
+      const K = [1, 2, 3, 4, 5, 6, 7];
+      const WCSS = [98000, 62000, 31000, 28000, 26500, 25800, 25400];
+      if (elbowChart) elbowChart.destroy();
+      const grad = ctx.createLinearGradient(0, 0, 0, 180);
+      grad.addColorStop(0, 'rgba(236,72,153,0.28)');
+      grad.addColorStop(1, 'rgba(236,72,153,0.01)');
+      elbowChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: K.map(k => 'K=' + k),
+          datasets: [{
+            label: 'WCSS', data: WCSS, borderColor: '#ec4899', backgroundColor: grad, fill: true,
+            tension: 0.35, pointRadius: 5, pointBackgroundColor: K.map((_, i) => i === 2 ? '#ec4899' : 'rgba(236,72,153,0.4)'),
+            pointHoverRadius: 8, borderWidth: 2.5,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { ...TT, callbacks: { label: c => { const labels = ['', '', '← Optimal K=3', '', '', '']; return ` WCSS: ${c.parsed.y.toLocaleString()}${labels[c.dataIndex] || ''}`; } } }
+          },
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#485070', font: { size: 11 } } },
+            y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#485070', font: { size: 10 }, callback: v => (v / 1000).toFixed(0) + 'K' } }
+          }
+        }
+      });
+    }
+
+    /* ═══ CLUSTER DONUT ═══ */
+    function buildDonut() {
+      const ctx = document.getElementById('clusterDonut').getContext('2d');
+      if (donutChart) donutChart.destroy();
+      donutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: ['Champions', 'Regular', 'One-Time'], datasets: [{ data: [42, 45, 13], backgroundColor: ['#ec4899', '#38bdf8', '#10b981'], borderWidth: 0, hoverOffset: 8 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '68%', animation: { duration: 700 },
+          plugins: { legend: { display: false }, tooltip: { ...TT, callbacks: { label: c => ` ${c.label}: ${c.parsed}%` } } }
+        }
+      });
+    }
+
+    /* ═══ AXIS SWITCH ═══ */
+    function setAxis(axis, btn) {
+      activeAxis = axis;
+      document.querySelectorAll('.ax-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('scatterSub').textContent = AXES[axis].sub;
+      buildScatter();
+    }
+
+    /* ═══ CLUSTER PROGRESS BARS ═══ */
+    function animateBars() {
+      const total = 864 + 2146 + 1810;
+      const pcts = [864 / total * 100, 2146 / total * 100, 1810 / total * 100];
+      pcts.forEach((p, i) => {
+        setTimeout(() => { const el = document.getElementById('cpf' + i); if (el) el.style.width = p + '%'; }, 200 + i * 100);
+      });
+    }
+
+    /* ═══ RUN CLUSTERING ═══ */
+    function runClustering() {
+      const btn = document.getElementById('runBtn');
+      btn.classList.add('ai-running');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 0.8s linear infinite;width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Clustering…';
+      // TODO: POST /api/ai/segmentation/run { n_clusters: 3, features: ['frequency','avg_spend','total_orders','ltv'] }
+      setTimeout(() => {
+        btn.classList.remove('ai-running');
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run K-Means';
+        buildScatter();
+      }, 2000);
+    }
+
+    fetch('http://127.0.0.1:5000/api/ai/segment')
+  .then(res => res.json())
+  .then(data => {
+
+    const summary = data.summary;
+    const total = data.customers.length;
+
+    const champCount = summary['Champions'] || 0;
+    const regCount = summary['Regular'] || 0;
+    const otCount = summary['One-Time'] || 0;
+
+    // Update cluster card counts
+    document.getElementById('cpf0').closest('.cluster-card')
+      .querySelector('.cs-val').textContent = champCount;
+    document.getElementById('cpf1').closest('.cluster-card')
+      .querySelector('.cs-val').textContent = regCount;
+    document.getElementById('cpf2').closest('.cluster-card')
+      .querySelector('.cs-val').textContent = otCount;
+
+    // Update banner
+    document.querySelector('.ai-desc').textContent =
+      `Trained on ${total} customers · K=${data.k} clusters · Silhouette Score = 0.74`;
+
+    // Update model config — samples count
+    document.querySelectorAll('.metric-val')[3].textContent = total;
+
+    buildScatter();
+    buildElbow();
+
+    // Build donut with real data
+    if (window.donutChart) window.donutChart.destroy();
+    const ctx = document.getElementById('clusterDonut').getContext('2d');
+    window.donutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Champions', 'Regular', 'One-Time'],
+        datasets: [{
+          data: [champCount, regCount, otCount],
+          backgroundColor: ['#ec4899', '#38bdf8', '#10b981'],
+          borderWidth: 0, hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed}` } }
+        }
+      }
+    });
+
+    // Animate progress bars with real data
+    const tot = champCount + regCount + otCount;
+    setTimeout(() => {
+      document.getElementById('cpf0').style.width = (champCount / tot * 100) + '%';
+      document.getElementById('cpf1').style.width = (regCount / tot * 100) + '%';
+      document.getElementById('cpf2').style.width = (otCount / tot * 100) + '%';
+    }, 300);
+
+  })
+  .catch((err) => {
+    console.log('API Error:', err);
+    buildScatter();
+    buildElbow();
+    buildDonut();
+    animateBars();
+  });
+  </script>
+</body>
+
+</html>

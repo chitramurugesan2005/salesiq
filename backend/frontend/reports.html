@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report Generation — SalesIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #050812;
+      --bg2: #090d1e;
+      --bg3: #0e1328;
+      --bg4: #131930;
+      --bg5: #191f3a;
+      --border: rgba(255, 255, 255, 0.055);
+      --border-h: rgba(255, 255, 255, 0.12);
+      --text: #d4daf0;
+      --text-sub: #49547a;
+      --text-dim: #1a2042;
+      --sky: #0ea5e9;
+      --sky-g: rgba(14, 165, 233, 0.13);
+      --green: #22c55e;
+      --green-g: rgba(34, 197, 94, 0.12);
+      --red: #ef4444;
+      --red-g: rgba(239, 68, 68, 0.12);
+      --amber: #f59e0b;
+      --amber-g: rgba(245, 158, 11, 0.12);
+      --violet: #8b5cf6;
+      --violet-g: rgba(139, 92, 246, 0.12);
+      --sidebar-w: 244px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(14, 165, 233, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(14, 165, 233, 0.02) 1px, transparent 1px);
+      background-size: 44px 44px
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0
+    }
+
+    .orb-1 {
+      width: 620px;
+      height: 620px;
+      background: radial-gradient(circle, #031828 0%, transparent 65%);
+      top: -250px;
+      right: -100px;
+      opacity: 0.5
+    }
+
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #100820 0%, transparent 70%);
+      bottom: -150px;
+      left: 180px;
+      opacity: 0.4
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--sky);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff
+    }
+
+    .logo-name {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-sub)
+    }
+
+    .nav-section {
+      padding: 14px 10px 2px
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 4px
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-sub);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+      margin-bottom: 1px
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke-width: 1.8
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text)
+    }
+
+    .nav-item.active {
+      background: var(--sky-g);
+      color: var(--sky);
+      font-weight: 500;
+      border: 1px solid rgba(14, 165, 233, 0.2)
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid var(--border)
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      cursor: pointer
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--sky), var(--violet));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0
+    }
+
+    /* MAIN */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh
+    }
+
+    .topbar {
+      padding: 0 28px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(5, 8, 18, 0.9);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 50
+    }
+
+    .page-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.2px
+    }
+
+    .page-sub {
+      font-size: 11px;
+      color: var(--text-sub)
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+      white-space: nowrap
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text-sub);
+      border: 1px solid var(--border)
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-h)
+    }
+
+    .btn-sky {
+      background: var(--sky);
+      color: #fff;
+      font-weight: 600
+    }
+
+    .btn-sky:hover {
+      opacity: .88
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: #031008;
+      font-weight: 600
+    }
+
+    .btn-green:hover {
+      opacity: .88
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px
+    }
+
+    .content {
+      padding: 22px 28px 48px;
+      flex: 1
+    }
+
+    /* Report type cards */
+    .report-types {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+      animation: fadeUp 0.4s ease 0.1s both
+    }
+
+    .rtype-card {
+      background: var(--bg2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      cursor: pointer;
+      transition: all 0.22s;
+      position: relative;
+      overflow: hidden
+    }
+
+    .rtype-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px
+    }
+
+    .rtype-card:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px)
+    }
+
+    .rtype-card.selected {
+      border-color: var(--sky);
+      background: rgba(14, 165, 233, 0.06)
+    }
+
+    .rtype-card.selected::before {
+      background: var(--sky)
+    }
+
+    .rtype-card:not(.selected)::before {
+      background: transparent
+    }
+
+    .rtype-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 12px
+    }
+
+    .rtype-name {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px
+    }
+
+    .rtype-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.5;
+      margin-bottom: 12px
+    }
+
+    .rtype-includes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px
+    }
+
+    .rtype-tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-sub)
+    }
+
+    .check-mark {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--sky);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 12px
+    }
+
+    .rtype-card.selected .check-mark {
+      display: flex
+    }
+
+    /* Config panel */
+    .config-panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 18px;
+      animation: fadeUp 0.45s ease 0.2s both
+    }
+
+    .config-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em
+    }
+
+    .form-input,
+    .form-select {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: all 0.18s
+    }
+
+    .form-input::placeholder {
+      color: var(--text-sub)
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12)
+    }
+
+    option {
+      background: var(--bg3)
+    }
+
+    /* module checkboxes */
+    .module-checks {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 18px
+    }
+
+    .mod-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s
+    }
+
+    .mod-check:hover {
+      border-color: var(--border-h)
+    }
+
+    .mod-check input {
+      accent-color: var(--sky);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      flex-shrink: 0
+    }
+
+    .mod-check-label {
+      font-size: 12px;
+      font-weight: 500
+    }
+
+    /* export buttons */
+    .export-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap
+    }
+
+    .export-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 20px;
+      border-radius: var(--radius);
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+      min-width: 200px
+    }
+
+    .export-btn svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0
+    }
+
+    .export-btn-pdf {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff
+    }
+
+    .export-btn-pdf:hover {
+      opacity: .9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3)
+    }
+
+    .export-btn-excel {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: #fff
+    }
+
+    .export-btn-excel:hover {
+      opacity: .9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(22, 163, 74, 0.3)
+    }
+
+    .export-btn-csv {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border)
+    }
+
+    .export-btn-csv:hover {
+      border-color: var(--border-h);
+      background: var(--bg4)
+    }
+
+    .export-label {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      text-align: left
+    }
+
+    .export-label-main {
+      font-size: 14px;
+      font-weight: 700
+    }
+
+    .export-label-sub {
+      font-size: 11px;
+      opacity: 0.75;
+      font-weight: 400
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      display: none;
+      margin-top: 14px
+    }
+
+    .progress-wrap.show {
+      display: block
+    }
+
+    .progress-label {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between
+    }
+
+    .progress-track {
+      height: 6px;
+      background: var(--bg4);
+      border-radius: 99px;
+      overflow: hidden
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.3s ease
+    }
+
+    /* preview + history layout */
+    .bottom-duo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px
+    }
+
+    /* card */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both
+    }
+
+    .card-head {
+      padding: 18px 20px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between
+    }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 2px
+    }
+
+    .card-body {
+      padding: 14px 20px 20px
+    }
+
+    /* report preview */
+    .preview-shell {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      min-height: 240px
+    }
+
+    .prev-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .prev-logo {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--sky)
+    }
+
+    .prev-meta {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-align: right
+    }
+
+    .prev-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px
+    }
+
+    .prev-kpi {
+      background: var(--bg4);
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center
+    }
+
+    .prev-kpi-val {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--sky)
+    }
+
+    .prev-kpi-lbl {
+      font-size: 9px;
+      color: var(--text-sub);
+      margin-top: 1px
+    }
+
+    .prev-chart-mock {
+      height: 60px;
+      background: var(--bg4);
+      border-radius: 6px;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      padding: 8px;
+      overflow: hidden
+    }
+
+    .prev-bar {
+      border-radius: 2px 2px 0 0;
+      flex: 1;
+      opacity: 0.7
+    }
+
+    .prev-footer {
+      font-size: 9px;
+      color: var(--text-sub);
+      text-align: center;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border)
+    }
+
+    /* history table */
+    .hist-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px
+    }
+
+    .hist-table th {
+      padding: 7px 12px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .hist-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle
+    }
+
+    .hist-table tr:last-child td {
+      border-bottom: none
+    }
+
+    .hist-table tbody tr:hover {
+      background: var(--bg3)
+    }
+
+    .hist-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0
+    }
+
+    /* scheduled */
+    .sched-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .sched-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .sched-info {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .sched-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0
+    }
+
+    .sched-name {
+      font-size: 12px;
+      font-weight: 600
+    }
+
+    .sched-freq {
+      font-size: 10px;
+      color: var(--text-sub)
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      cursor: pointer
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--bg4);
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      transition: all 0.25s
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text-sub);
+      bottom: 2px;
+      left: 2px;
+      transition: all 0.25s
+    }
+
+    .toggle input:checked+.toggle-slider {
+      background: var(--sky);
+      border-color: var(--sky)
+    }
+
+    .toggle input:checked+.toggle-slider::before {
+      transform: translateX(16px);
+      background: #fff
+    }
+
+    /* badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600
+    }
+
+    .badge-sky {
+      background: var(--sky-g);
+      color: var(--sky);
+      border: 1px solid rgba(14, 165, 233, 0.22)
+    }
+
+    .badge-green {
+      background: var(--green-g);
+      color: var(--green);
+      border: 1px solid rgba(34, 197, 94, 0.22)
+    }
+
+    .badge-red {
+      background: var(--red-g);
+      color: var(--red);
+      border: 1px solid rgba(239, 68, 68, 0.22)
+    }
+
+    .badge-amber {
+      background: var(--amber-g);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.22)
+    }
+
+    /* toast */
+    .toast-wrap {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .toast {
+      background: var(--bg2);
+      border: 1px solid var(--border-h);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 260px;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4)
+    }
+
+    .toast svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0
+    }
+
+    .toast.success {
+      border-color: rgba(34, 197, 94, 0.3);
+      color: var(--green)
+    }
+
+    .toast.info {
+      border-color: rgba(14, 165, 233, 0.3);
+      color: var(--sky)
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0)
+      }
+
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @media(max-width:1100px) {
+      .report-types {
+        grid-template-columns: 1fr 1fr
+      }
+
+      ;
+
+      .config-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      ;
+
+      .module-checks {
+        grid-template-columns: repeat(3, 1fr)
+      }
+
+      ;
+
+      .bottom-duo {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media(max-width:900px) {
+      .sidebar {
+        transform: translateX(-100%)
+      }
+
+      ;
+
+      .main {
+        margin-left: 0
+      }
+
+      ;
+
+      .content {
+        padding: 14px
+      }
+
+      ;
+
+      .report-types {
+        grid-template-columns: 1fr
+      }
+
+      ;
+
+      .module-checks {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-box">SQ</div>
+        <div>
+          <div class="logo-name">SalesIQ</div>
+          <div class="logo-sub">v1.0 · Team Project</div>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a class="nav-item" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>Dashboard</a>
+        <a class="nav-item" href="sales-data.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+          </svg>Sales Data</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Analytics</div>
+        <a class="nav-item" href="trends.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>Trends</a>
+        <a class="nav-item" href="products.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>Products</a>
+        <a class="nav-item" href="customers.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>Customers</a>
+        <a class="nav-item" href="regional.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>Regional</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">AI Modules</div>
+        <a class="nav-item" href="forecasting.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>Forecasting</a>
+        <a class="nav-item" href="segmentation.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83" />
+          </svg>Segmentation</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <a class="nav-item active" href="reports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>Reports</a>
+        <a class="nav-item" href="login.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>Logout</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar">AD</div>
+          <div>
+            <div style="font-size:12px;font-weight:500;">Admin User</div>
+            <div style="font-size:10px;color:var(--text-sub);">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Report Generation</div>
+          <div class="page-sub">Module 8 · Download PDF & Excel · Schedule reports · Export history</div>
+        </div>
+        <div class="topbar-right">
+          <span style="font-size:12px;color:var(--text-sub);">Last generated: <strong style="color:var(--text);">Today,
+              09:42 AM</strong></span>
+          <button class="btn btn-sky btn-sm" onclick="generateQuick()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+              <polyline points="13 2 13 9 20 9" />
+            </svg>
+            Quick Report
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- Report type cards -->
+        <div class="report-types" id="reportTypes">
+          <div class="rtype-card selected" onclick="selectReport(this,'full')">
+            <div class="check-mark">✓</div>
+            <div class="rtype-icon" style="background:rgba(14,165,233,0.12);">📊</div>
+            <div class="rtype-name">Full Dashboard Report</div>
+            <div class="rtype-desc">Complete analytics snapshot — all KPIs, trend charts, top products, regional
+              breakdown, and AI forecasts in one document.</div>
+            <div class="rtype-includes">
+              <span class="rtype-tag">KPI Summary</span><span class="rtype-tag">Trends</span><span
+                class="rtype-tag">Products</span>
+              <span class="rtype-tag">Customers</span><span class="rtype-tag">Regional</span><span class="rtype-tag">AI
+                Forecast</span>
+            </div>
+          </div>
+          <div class="rtype-card" onclick="selectReport(this,'sales')">
+            <div class="check-mark">✓</div>
+            <div class="rtype-icon" style="background:rgba(34,197,94,0.12);">💹</div>
+            <div class="rtype-name">Sales Performance Report</div>
+            <div class="rtype-desc">Revenue trends, top products, category breakdown, and period-over-period comparison
+              focused on sales metrics only.</div>
+            <div class="rtype-includes">
+              <span class="rtype-tag">Revenue</span><span class="rtype-tag">Orders</span><span
+                class="rtype-tag">Products</span>
+              <span class="rtype-tag">Categories</span><span class="rtype-tag">YoY</span>
+            </div>
+          </div>
+          <div class="rtype-card" onclick="selectReport(this,'customer')">
+            <div class="check-mark">✓</div>
+            <div class="rtype-icon" style="background:rgba(139,92,246,0.12);">👥</div>
+            <div class="rtype-name">Customer Analytics Report</div>
+            <div class="rtype-desc">Segment analysis, acquisition funnel, top customers by LTV, retention metrics, and
+              K-Means cluster profiles.</div>
+            <div class="rtype-includes">
+              <span class="rtype-tag">Segments</span><span class="rtype-tag">Funnel</span><span class="rtype-tag">Top
+                Customers</span>
+              <span class="rtype-tag">Retention</span><span class="rtype-tag">AI Clusters</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Config panel -->
+        <div class="config-panel">
+          <div class="config-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              style="width:18px;height:18px;color:var(--sky);">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              <path d="M4.93 4.93a10 10 0 0 0 0 14.14" />
+            </svg>
+            Report Configuration
+          </div>
+
+          <div class="config-grid">
+            <div class="form-group">
+              <label class="form-label">Report Title</label>
+              <input type="text" class="form-input" id="reportTitle" value="SalesIQ — Q2 2026 Report"
+                placeholder="Enter report title" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date Range</label>
+              <select class="form-select" id="dateRange">
+                <option>This Month (May 2026)</option>
+                <option selected>This Quarter (Q2 2026)</option>
+                <option>Last 6 Months</option>
+                <option>This Year (2026)</option>
+                <option>Custom Range</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prepared By</label>
+              <input type="text" class="form-input" id="preparedBy" value="Admin User" placeholder="Your name" />
+            </div>
+          </div>
+
+          <div
+            style="font-size:11px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">
+            Include Modules</div>
+          <div class="module-checks">
+            <label class="mod-check"><input type="checkbox" checked /><span class="mod-check-label">📋 Sales
+                Data</span></label>
+            <label class="mod-check"><input type="checkbox" checked /><span class="mod-check-label">📈
+                Trends</span></label>
+            <label class="mod-check"><input type="checkbox" checked /><span class="mod-check-label">🏆
+                Products</span></label>
+            <label class="mod-check"><input type="checkbox" checked /><span class="mod-check-label">👥
+                Customers</span></label>
+            <label class="mod-check"><input type="checkbox" checked /><span class="mod-check-label">🗺️
+                Regional</span></label>
+            <label class="mod-check"><input type="checkbox" checked /><span class="mod-check-label">🤖
+                Forecasting</span></label>
+            <label class="mod-check"><input type="checkbox" checked /><span class="mod-check-label">🧠
+                Segmentation</span></label>
+            <label class="mod-check"><input type="checkbox" /><span class="mod-check-label">📌 Executive
+                Summary</span></label>
+            <label class="mod-check"><input type="checkbox" checked /><span class="mod-check-label">📎 Raw Data
+                Tables</span></label>
+            <label class="mod-check"><input type="checkbox" /><span class="mod-check-label">📝 Appendix</span></label>
+          </div>
+
+          <!-- Export buttons -->
+          <div class="export-row">
+            <button class="export-btn export-btn-pdf" onclick="exportReport('pdf')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 9 20 9" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+              <div class="export-label">
+                <div class="export-label-main">Download as PDF</div>
+                <div class="export-label-sub">Formatted report · Print-ready · ~12 pages</div>
+              </div>
+            </button>
+            <button class="export-btn export-btn-excel" onclick="exportReport('excel')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M9 3v18" />
+                <path d="M3 9h18" />
+              </svg>
+              <div class="export-label">
+                <div class="export-label-main">Download as Excel</div>
+                <div class="export-label-sub">Multi-sheet workbook · Raw data + charts</div>
+              </div>
+            </button>
+            <button class="export-btn export-btn-csv" onclick="exportReport('csv')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <div class="export-label">
+                <div class="export-label-main">Export Raw CSV</div>
+                <div class="export-label-sub">Data only · All selected modules</div>
+              </div>
+            </button>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="progress-wrap" id="progressWrap">
+            <div class="progress-label"><span id="progressLabel">Generating report…</span><span
+                id="progressPct">0%</span></div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview + History -->
+        <div class="bottom-duo">
+
+          <!-- Report preview -->
+          <div class="card" style="animation-delay:0.28s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Report Preview</div>
+                <div class="card-sub">Live preview of the selected report layout</div>
+              </div>
+              <span class="badge badge-sky">Full Dashboard</span>
+            </div>
+            <div class="card-body">
+              <div class="preview-shell">
+                <div class="prev-header">
+                  <div class="prev-logo">SalesIQ Analytics</div>
+                  <div class="prev-meta">
+                    <div>Q2 2026 Report</div>
+                    <div>Generated: May 2026</div>
+                  </div>
+                </div>
+                <div class="prev-kpi-row">
+                  <div class="prev-kpi">
+                    <div class="prev-kpi-val">$84K</div>
+                    <div class="prev-kpi-lbl">Revenue</div>
+                  </div>
+                  <div class="prev-kpi">
+                    <div class="prev-kpi-val">2,148</div>
+                    <div class="prev-kpi-lbl">Orders</div>
+                  </div>
+                  <div class="prev-kpi">
+                    <div class="prev-kpi-val">34.2%</div>
+                    <div class="prev-kpi-lbl">Margin</div>
+                  </div>
+                  <div class="prev-kpi">
+                    <div class="prev-kpi-val">+18.7%</div>
+                    <div class="prev-kpi-lbl">Growth</div>
+                  </div>
+                </div>
+                <div class="prev-chart-mock">
+                  <div class="prev-bar" style="height:35%;background:#0ea5e9;"></div>
+                  <div class="prev-bar" style="height:40%;background:#0ea5e9;"></div>
+                  <div class="prev-bar" style="height:55%;background:#0ea5e9;"></div>
+                  <div class="prev-bar" style="height:50%;background:#0ea5e9;"></div>
+                  <div class="prev-bar" style="height:65%;background:#22c55e;"></div>
+                  <div class="prev-bar" style="height:60%;background:#22c55e;"></div>
+                  <div class="prev-bar" style="height:75%;background:#22c55e;"></div>
+                  <div class="prev-bar" style="height:70%;background:#22c55e;"></div>
+                  <div class="prev-bar" style="height:85%;background:#8b5cf6;"></div>
+                  <div class="prev-bar" style="height:80%;background:#8b5cf6;"></div>
+                  <div class="prev-bar" style="height:95%;background:#f59e0b;border:1px dashed rgba(255,255,255,0.3);">
+                  </div>
+                  <div class="prev-bar" style="height:100%;background:#f59e0b;border:1px dashed rgba(255,255,255,0.3);">
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                  <div style="flex:1;height:24px;background:var(--bg4);border-radius:4px;"></div>
+                  <div style="flex:1;height:24px;background:var(--bg4);border-radius:4px;"></div>
+                  <div style="flex:1;height:24px;background:var(--bg4);border-radius:4px;"></div>
+                </div>
+                <div class="prev-footer">SalesIQ Analytics Platform · Team Project · Confidential</div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px;">
+                <div style="flex:1;font-size:11px;color:var(--text-sub);">📄 Est. 12 pages · Includes all selected
+                  modules</div>
+                <button class="btn btn-ghost btn-sm" onclick="toast('info','Preview updated with latest data.')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="width:13px;height:13px;">
+                    <polyline points="23 4 23 10 17 10" />
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                  </svg>
+                  Refresh
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scheduled + History -->
+          <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <!-- Scheduled reports -->
+            <div class="card" style="animation-delay:0.34s;">
+              <div class="card-head">
+                <div>
+                  <div class="card-title">Scheduled Reports</div>
+                  <div class="card-sub">Auto-generated on a recurring schedule</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="sched-list">
+                  <div class="sched-item">
+                    <div class="sched-info">
+                      <div class="sched-icon" style="background:rgba(14,165,233,0.12);">📊</div>
+                      <div>
+                        <div class="sched-name">Weekly Dashboard Summary</div>
+                        <div class="sched-freq">Every Monday · 08:00 AM · PDF</div>
+                      </div>
+                    </div>
+                    <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                  </div>
+                  <div class="sched-item">
+                    <div class="sched-info">
+                      <div class="sched-icon" style="background:rgba(34,197,94,0.12);">💹</div>
+                      <div>
+                        <div class="sched-name">Monthly Sales Report</div>
+                        <div class="sched-freq">1st of each month · Excel + PDF</div>
+                      </div>
+                    </div>
+                    <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                  </div>
+                  <div class="sched-item">
+                    <div class="sched-info">
+                      <div class="sched-icon" style="background:rgba(139,92,246,0.12);">🤖</div>
+                      <div>
+                        <div class="sched-name">Quarterly AI Forecast</div>
+                        <div class="sched-freq">End of quarter · Full PDF</div>
+                      </div>
+                    </div>
+                    <label class="toggle"><input type="checkbox" /><span class="toggle-slider"></span></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Export history -->
+            <div class="card" style="animation-delay:0.40s;">
+              <div class="card-head">
+                <div>
+                  <div class="card-title">Export History</div>
+                  <div class="card-sub">Recently generated reports</div>
+                </div>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <table class="hist-table">
+                  <thead>
+                    <tr>
+                      <th>Report</th>
+                      <th>Format</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="histTable"></tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const HISTORY = [
+      { name: 'Q2 2026 Full Report', fmt: 'PDF', icon: '📄', fmtColor: '#ef4444', date: 'Today 09:42', status: 'Ready', badge: 'badge-green' },
+      { name: 'Sales Performance Apr', fmt: 'Excel', icon: '📗', fmtColor: '#16a34a', date: 'Yesterday 14:20', status: 'Ready', badge: 'badge-green' },
+      { name: 'Customer Analytics Q1', fmt: 'PDF', icon: '📄', fmtColor: '#ef4444', date: 'May 18, 11:05', status: 'Ready', badge: 'badge-green' },
+      { name: 'Weekly Summary W19', fmt: 'PDF', icon: '📄', fmtColor: '#ef4444', date: 'May 13, 08:00', status: 'Ready', badge: 'badge-green' },
+      { name: 'Regional Report Q2', fmt: 'CSV', icon: '📃', fmtColor: '#0ea5e9', date: 'May 10, 16:40', status: 'Ready', badge: 'badge-green' },
+      { name: 'AI Forecast Report', fmt: 'PDF', icon: '📄', fmtColor: '#ef4444', date: 'May 5, 09:15', status: 'Expired', badge: 'badge-amber' },
+    ];
+
+    function buildHistory() {
+      document.getElementById('histTable').innerHTML = HISTORY.map(h => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="hist-icon" style="background:${h.fmtColor}22;">${h.icon}</div>
+          <span style="font-weight:500;font-size:12px;">${h.name}</span>
+        </div>
+      </td>
+      <td><span class="badge" style="background:${h.fmtColor}18;color:${h.fmtColor};border:1px solid ${h.fmtColor}33;">${h.fmt}</span></td>
+      <td style="color:var(--text-sub);font-size:11px;">${h.date}</td>
+      <td><span class="badge ${h.badge}">${h.status}</span></td>
+    </tr>`).join('');
+    }
+
+    function selectReport(card, type) {
+      document.querySelectorAll('.rtype-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      const labels = { full: 'Full Dashboard', sales: 'Sales Performance', customer: 'Customer Analytics' };
+      document.querySelector('.badge-sky').textContent = labels[type];
+    }
+
+    let exporting = false;
+    function exportReport(format) {
+    if (exporting) return;
+    exporting = true;
+
+    const title      = document.getElementById('reportTitle').value || 'SalesIQ Report';
+    const preparedBy = document.getElementById('preparedBy').value || 'Admin';
+    const dateRange  = document.getElementById('dateRange').value;
+
+    // Map date range selection to period
+    let period = 'quarter';
+    if (dateRange.includes('Month'))   period = 'month';
+    if (dateRange.includes('Quarter')) period = 'quarter';
+    if (dateRange.includes('6 Month')) period = 'month';
+    if (dateRange.includes('Year'))    period = 'year';
+
+    const wrap  = document.getElementById('progressWrap');
+    const fill  = document.getElementById('progressFill');
+    const label = document.getElementById('progressLabel');
+    const pct   = document.getElementById('progressPct');
+
+    const colors = { 
+        pdf   : '#ef4444', 
+        excel : '#16a34a', 
+        csv   : '#0ea5e9' 
+    };
+
+    wrap.classList.add('show');
+    fill.style.background = colors[format];
+
+    // Animate progress bar
+    let progress = 0;
+    const iv = setInterval(() => {
+        progress += Math.random() * 22 + 8;
+        if (progress > 90) progress = 90;
+        fill.style.width  = progress + '%';
+        pct.textContent   = Math.round(progress) + '%';
+        label.textContent = 'Generating report...';
+    }, 280);
+
+    // Build URL
+    const params = new URLSearchParams({
+        period      : period,
+        title       : title,
+        prepared_by : preparedBy
+    });
+
+    let url      = '';
+    let filename = '';
+    let mimetype = '';
+
+    if (format === 'pdf') {
+        url      = `http://127.0.0.1:5000/api/reports/pdf?${params}`;
+        filename = 'salesiq_report.pdf';
+        mimetype = 'application/pdf';
+    } else if (format === 'excel') {
+        url      = `http://127.0.0.1:5000/api/reports/excel?${params}`;
+        filename = 'salesiq_report.xlsx';
+        mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    } else {
+        url      = `http://127.0.0.1:5000/api/reports/csv?${params}`;
+        filename = 'salesiq_report.csv';
+        mimetype = 'text/csv';
+    }
+
+    // ── KEY FIX: use blob to download binary files correctly ──
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Server error: ' + response.status);
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            clearInterval(iv);
+
+            // Create blob URL and trigger download
+            const blobUrl = window.URL.createObjectURL(
+                new Blob([blob], { type: mimetype })
+            );
+            const a = document.createElement('a');
+            a.href     = blobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+
+            // Update progress to complete
+            fill.style.width  = '100%';
+            pct.textContent   = '100%';
+            label.textContent = '✓ Report ready!';
+
+            setTimeout(() => {
+                wrap.classList.remove('show');
+                fill.style.width = '0%';
+                exporting = false;
+                toast('success', `${format.toUpperCase()} report downloaded successfully!`);
+            }, 800);
+        })
+        .catch(err => {
+            clearInterval(iv);
+            wrap.classList.remove('show');
+            fill.style.width = '0%';
+            exporting = false;
+            toast('error', 'Download failed: ' + err.message);
+            console.error('Download error:', err);
+        });
+}
+
+    function generateQuick() {
+      exportReport('pdf');
+    }
+
+    function toast(type, msg) {
+      const wrap = document.getElementById('toastWrap');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = type === 'success'
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${msg}`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${msg}`;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    buildHistory();
+  </script>
+</body>
+
+</html>

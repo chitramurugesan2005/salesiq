@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Performance — SalesIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #060910;
+      --bg2: #0a0e1a;
+      --bg3: #0f1422;
+      --bg4: #141a2c;
+      --bg5: #1b2236;
+      --border: rgba(255, 255, 255, 0.055);
+      --border-h: rgba(255, 255, 255, 0.12);
+      --text: #dce3f3;
+      --text-sub: #58617a;
+      --text-dim: #222840;
+      --accent: #6175f5;
+      --accent-g: rgba(97, 117, 245, 0.14);
+      --green: #2dd4a0;
+      --green-g: rgba(45, 212, 160, 0.12);
+      --amber: #f5a623;
+      --amber-g: rgba(245, 166, 35, 0.12);
+      --red: #f16464;
+      --red-g: rgba(241, 100, 100, 0.12);
+      --purple: #b07ef8;
+      --purple-g: rgba(176, 126, 248, 0.12);
+      --cyan: #38bdf8;
+      --cyan-g: rgba(56, 189, 248, 0.12);
+      --sidebar-w: 244px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(97, 117, 245, 0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(97, 117, 245, 0.028) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, #0e1660 0%, transparent 65%);
+      top: -280px;
+      right: -120px;
+      opacity: 0.5;
+    }
+
+    .orb-2 {
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, #061a30 0%, transparent 70%);
+      bottom: -160px;
+      left: 180px;
+      opacity: 0.4;
+    }
+
+    .orb-3 {
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, #1a0e40 0%, transparent 70%);
+      top: 45%;
+      left: 42%;
+      opacity: 0.22;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .logo-name {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .nav-section {
+      padding: 14px 10px 2px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-sub);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+      margin-bottom: 1px;
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke-width: 1.8;
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--accent-g);
+      color: var(--accent);
+      font-weight: 500;
+      border: 1px solid rgba(97, 117, 245, 0.18);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      cursor: pointer;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* ── Main ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      padding: 0 28px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(6, 9, 16, 0.88);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .page-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.2px;
+    }
+
+    .page-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-h);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .content {
+      padding: 22px 28px 48px;
+      flex: 1;
+    }
+
+    /* ── Category filter pills ── */
+    .cat-filter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      animation: fadeUp 0.3s ease both;
+    }
+
+    .cat-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-sub);
+      font-family: var(--font-body);
+      transition: all 0.18s;
+    }
+
+    .cat-tab:hover {
+      color: var(--text);
+      border-color: var(--border-h);
+      background: var(--bg3);
+    }
+
+    .cat-tab.active {
+      background: var(--accent-g);
+      color: var(--accent);
+      border-color: rgba(97, 117, 245, 0.28);
+    }
+
+    .cat-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .cat-count {
+      font-size: 10px;
+      opacity: 0.65;
+    }
+
+    /* ── Summary strip ── */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .s-chip {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      animation: fadeUp 0.4s ease both;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .s-chip::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .s-chip.c1::before {
+      background: var(--accent)
+    }
+
+    .s-chip.c2::before {
+      background: var(--green)
+    }
+
+    .s-chip.c3::before {
+      background: var(--amber)
+    }
+
+    .s-chip.c4::before {
+      background: var(--red)
+    }
+
+    .s-chip:nth-child(1) {
+      animation-delay: .04s
+    }
+
+    .s-chip:nth-child(2) {
+      animation-delay: .08s
+    }
+
+    .s-chip:nth-child(3) {
+      animation-delay: .12s
+    }
+
+    .s-chip:nth-child(4) {
+      animation-delay: .16s
+    }
+
+    .s-chip:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .s-chip-label {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+
+    .s-chip-value {
+      font-family: var(--font-head);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .s-chip-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .delta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+      margin-top: 5px;
+    }
+
+    .delta-up {
+      background: var(--green-g);
+      color: var(--green);
+    }
+
+    .delta-down {
+      background: var(--red-g);
+      color: var(--red);
+    }
+
+    /* ── Two-col main area ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    /* ── Card shell ── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.45s ease both;
+    }
+
+    .card-head {
+      padding: 18px 20px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 14px 20px 20px;
+    }
+
+    /* sort-tabs */
+    .sort-tabs {
+      display: flex;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .sort-tab {
+      padding: 4px 11px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      transition: all 0.16s;
+    }
+
+    .sort-tab.active {
+      background: var(--bg4);
+      color: var(--text);
+      border: 1px solid var(--border-h);
+    }
+
+    .sort-tab:hover:not(.active) {
+      color: var(--text);
+    }
+
+    /* ── Horizontal bars ── */
+    .hbar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      margin-top: 4px;
+    }
+
+    .hbar-item {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hbar-rank {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      font-family: var(--font-head);
+      flex-shrink: 0;
+    }
+
+    .hbar-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .hbar-name-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .hbar-name {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    .hbar-track {
+      height: 6px;
+      background: var(--bg4);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .hbar-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.75s cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+
+    .hbar-meta {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    /* badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .badge-blue {
+      background: var(--accent-g);
+      color: var(--accent);
+      border: 1px solid rgba(97, 117, 245, 0.2);
+    }
+
+    .badge-green {
+      background: var(--green-g);
+      color: var(--green);
+      border: 1px solid rgba(45, 212, 160, 0.2);
+    }
+
+    .badge-amber {
+      background: var(--amber-g);
+      color: var(--amber);
+      border: 1px solid rgba(245, 166, 35, 0.2);
+    }
+
+    .badge-red {
+      background: var(--red-g);
+      color: var(--red);
+      border: 1px solid rgba(241, 100, 100, 0.2);
+    }
+
+    .badge-purple {
+      background: var(--purple-g);
+      color: var(--purple);
+      border: 1px solid rgba(176, 126, 248, 0.2);
+    }
+
+    .badge-cyan {
+      background: var(--cyan-g);
+      color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* ── Donut + legend ── */
+    .donut-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 210px;
+    }
+
+    .donut-center {
+      position: absolute;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .donut-center-val {
+      font-family: var(--font-head);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .donut-center-lbl {
+      font-size: 10px;
+      color: var(--text-sub);
+      margin-top: 1px;
+    }
+
+    .cat-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .cat-leg-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cat-leg-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .cat-leg-name {
+      font-size: 12px;
+      color: var(--text-sub);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cat-leg-bar {
+      width: 70px;
+      height: 4px;
+      background: var(--bg4);
+      border-radius: 99px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .cat-leg-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.6s ease;
+    }
+
+    .cat-leg-pct {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      min-width: 30px;
+      text-align: right;
+    }
+
+    /* ── Leaderboard cards ── */
+    .leaderboard-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+      animation: fadeUp 0.5s ease 0.28s both;
+    }
+
+    .prod-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 14px;
+      cursor: default;
+      transition: all 0.22s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prod-card:hover {
+      border-color: var(--border-h);
+      transform: translateY(-4px);
+      box-shadow: 0 14px 48px rgba(0, 0, 0, 0.35);
+    }
+
+    .prod-card-top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .prod-card-rank-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      font-family: var(--font-head);
+    }
+
+    .prod-card-emoji {
+      font-size: 30px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .prod-card-name {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 3px;
+    }
+
+    .prod-card-cat {
+      font-size: 10px;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+    }
+
+    .prod-card-rev {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 2px;
+    }
+
+    .prod-card-units {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .spark-wrap {
+      height: 34px;
+      margin-top: 10px;
+    }
+
+    /* ── Bottom row ── */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ── Underperformer table ── */
+    .under-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .under-table th {
+      padding: 8px 14px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .under-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .under-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .under-table tbody tr {
+      transition: background 0.14s;
+    }
+
+    .under-table tbody tr:hover {
+      background: var(--bg3);
+    }
+
+    /* ── Stock bars ── */
+    .stock-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stock-item:last-child {
+      border-bottom: none;
+    }
+
+    .stock-name {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stock-track {
+      height: 5px;
+      background: var(--bg4);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .stock-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.7s ease;
+    }
+
+    .stock-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .stock-label {
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .stock-count {
+      font-size: 10px;
+      color: var(--text-sub);
+      white-space: nowrap;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @media(max-width:1200px) {
+      .leaderboard-grid {
+        grid-template-columns: repeat(3, 1fr)
+      }
+    }
+
+    @media(max-width:1050px) {
+      .main-grid {
+        grid-template-columns: 1fr
+      }
+
+      ;
+
+      .bottom-row {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media(max-width:900px) {
+      .sidebar {
+        transform: translateX(-100%)
+      }
+
+      ;
+
+      .main {
+        margin-left: 0
+      }
+
+      ;
+
+      .content {
+        padding: 14px
+      }
+
+      ;
+
+      .summary-strip {
+        grid-template-columns: 1fr 1fr
+      }
+
+      ;
+
+      .leaderboard-grid {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="layout">
+    <!-- ═════ SIDEBAR ═════ -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-box">SQ</div>
+        <div>
+          <div class="logo-name">SalesIQ</div>
+          <div class="logo-sub">v1.0 · Team Project</div>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a class="nav-item" href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>Dashboard</a>
+        <a class="nav-item" href="sales-data.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+          </svg>Sales Data</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Analytics</div>
+        <a class="nav-item" href="trends.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>Trends</a>
+        <a class="nav-item active" href="products.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>Products</a>
+        <a class="nav-item" href="customers.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>Customers</a>
+        <a class="nav-item" href="regional.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>Regional</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">AI Modules</div>
+        <a class="nav-item" href="forecasting.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>Forecasting</a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83" />
+          </svg>Segmentation</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <a class="nav-item" href="reports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>Reports</a>
+        <a class="nav-item" href="login.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>Logout</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar">AD</div>
+          <div>
+            <div style="font-size:12px;font-weight:500;">Admin User</div>
+            <div style="font-size:10px;color:var(--text-sub);">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ═════ MAIN ═════ -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Product Performance</div>
+          <div class="page-sub">Module 5 · Top 10 products · Category-wise breakdown · Underperformer spotlight</div>
+        </div>
+        <div class="topbar-right">
+          <div class="sort-tabs" id="periodTabs">
+            <button class="sort-tab" onclick="setPeriod('month',this)">Month</button>
+            <button class="sort-tab active" onclick="setPeriod('quarter',this)">Quarter</button>
+            <button class="sort-tab" onclick="setPeriod('year',this)">Year</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="exportData()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- Category filter pills -->
+        <div class="cat-filter" id="catFilter"></div>
+
+        <!-- Summary strip -->
+        <div class="summary-strip">
+          <div class="s-chip c1">
+            <div class="s-chip-label">Total Products</div>
+            <div class="s-chip-value">24</div>
+            <div class="s-chip-sub">Across 6 categories</div>
+            <div class="delta-badge delta-up">▲ +3 new this quarter</div>
+          </div>
+          <div class="s-chip c2">
+            <div class="s-chip-label">Top Revenue</div>
+            <div class="s-chip-value">$12.5K</div>
+            <div class="s-chip-sub">Wireless Earbuds Pro</div>
+            <div class="delta-badge delta-up">▲ +22.4% vs prior</div>
+          </div>
+          <div class="s-chip c3">
+            <div class="s-chip-label">Avg Units / Product</div>
+            <div class="s-chip-value">186</div>
+            <div class="s-chip-sub">Per product this period</div>
+            <div class="delta-badge delta-up">▲ +8.1% growth</div>
+          </div>
+          <div class="s-chip c4">
+            <div class="s-chip-label">Underperformers</div>
+            <div class="s-chip-value" style="color:var(--red);">5</div>
+            <div class="s-chip-sub">Below $2K threshold</div>
+            <div class="delta-badge delta-down">▼ Needs attention</div>
+          </div>
+        </div>
+
+        <!-- Main 2-col grid -->
+        <div class="main-grid">
+
+          <!-- Top 10 horizontal bar chart -->
+          <div class="card" style="animation-delay:0.18s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Top 10 Products by Revenue</div>
+                <div class="card-sub" id="barSubLabel">Ranked · Q2 2026 · Click metric to re-sort</div>
+              </div>
+              <div class="sort-tabs" id="metricTabs">
+                <button class="sort-tab active" onclick="setMetric('revenue',this)">Revenue</button>
+                <button class="sort-tab" onclick="setMetric('units',this)">Units</button>
+                <button class="sort-tab" onclick="setMetric('margin',this)">Margin</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="hbar-list" id="hbarList"></div>
+            </div>
+          </div>
+
+          <!-- Category donut -->
+          <div class="card" style="animation-delay:0.24s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Category-wise Breakdown</div>
+                <div class="card-sub">Revenue share per category</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="donut-wrap">
+                <canvas id="donutChart"></canvas>
+                <div class="donut-center">
+                  <div class="donut-center-val">$51K</div>
+                  <div class="donut-center-lbl">Total Revenue</div>
+                </div>
+              </div>
+              <div class="cat-legend" id="catLegend"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Top 5 leaderboard cards -->
+        <div class="leaderboard-grid" id="leaderboardGrid"></div>
+
+        <!-- Bottom row -->
+        <div class="bottom-row">
+
+          <!-- Underperformer table -->
+          <div class="card" style="animation-delay:0.34s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Underperforming Products</div>
+                <div class="card-sub">Revenue below $2,000 threshold — action required</div>
+              </div>
+              <span class="badge badge-red" style="margin-top:2px; flex-shrink:0;">5 flagged</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="under-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Revenue</th>
+                    <th>Units</th>
+                    <th>Root Cause</th>
+                  </tr>
+                </thead>
+                <tbody id="underTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Stock status -->
+          <div class="card" style="animation-delay:0.40s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Stock Level Status</div>
+                <div class="card-sub">Inventory health — top 8 products</div>
+              </div>
+            </div>
+            <div class="card-body" id="stockList"></div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══════════════ SCRIPTS ═══════════════ -->
+  <script>
+    /* ════════ DATA ════════ */
+    const CAT_COLORS = { Electronics: '#6175f5', Clothing: '#2dd4a0', 'Home & Living': '#f5a623', Beauty: '#f16464', Sports: '#b07ef8', Books: '#38bdf8' };
+    const CAT_BADGE = { Electronics: 'badge-blue', Clothing: 'badge-green', 'Home & Living': 'badge-amber', Beauty: 'badge-red', Sports: 'badge-purple', Books: 'badge-cyan' };
+    const CAT_EMOJI = { Electronics: '📱', Clothing: '👗', 'Home & Living': '🏠', Beauty: '💄', Sports: '⚽', Books: '📚' };
+
+    const PRODUCTS = [
+      { rank: 1, name: 'Wireless Earbuds Pro', cat: 'Electronics', revenue: 12480, units: 312, margin: 38, stock: 82, stockMax: 400, emoji: '🎧', spark: [62, 71, 68, 80, 78, 88, 84] },
+      { rank: 2, name: 'Linen Shirt — Slate', cat: 'Clothing', revenue: 8910, units: 594, margin: 44, stock: 210, stockMax: 600, emoji: '👕', spark: [48, 56, 52, 60, 62, 70, 68] },
+      { rank: 3, name: 'Smart LED Desk Lamp', cat: 'Home & Living', revenue: 6240, units: 208, margin: 31, stock: 18, stockMax: 250, emoji: '💡', spark: [40, 40, 44, 44, 48, 48, 52] },
+      { rank: 4, name: 'Vitamin C Serum', cat: 'Beauty', revenue: 4995, units: 333, margin: 55, stock: 145, stockMax: 400, emoji: '✨', spark: [28, 32, 32, 38, 38, 42, 40] },
+      { rank: 5, name: 'Running Shoes X3', cat: 'Sports', revenue: 3740, units: 102, margin: 29, stock: 68, stockMax: 150, emoji: '👟', spark: [24, 24, 28, 28, 32, 32, 30] },
+      { rank: 6, name: 'Mechanical Keyboard', cat: 'Electronics', revenue: 3120, units: 52, margin: 34, stock: 0, stockMax: 100, emoji: '⌨️', spark: [20, 24, 24, 26, 26, 26, 24] },
+      { rank: 7, name: 'Data Science Handbook', cat: 'Books', revenue: 2730, units: 78, margin: 60, stock: 200, stockMax: 300, emoji: '📘', spark: [18, 18, 22, 22, 24, 22, 22] },
+      { rank: 8, name: 'Yoga Mat Pro', cat: 'Sports', revenue: 2475, units: 55, margin: 40, stock: 90, stockMax: 120, emoji: '🧘', spark: [18, 18, 20, 20, 20, 20, 20] },
+      { rank: 9, name: 'Smart Watch Series 4', cat: 'Electronics', revenue: 2198, units: 11, margin: 25, stock: 3, stockMax: 50, emoji: '⌚', spark: [16, 18, 18, 18, 18, 18, 18] },
+      { rank: 10, name: 'Moisturiser SPF50', cat: 'Beauty', revenue: 1936, units: 88, margin: 52, stock: 175, stockMax: 200, emoji: '🧴', spark: [14, 14, 16, 14, 16, 16, 16] },
+    ];
+
+    const UNDERPERFORMERS = [
+      { name: 'Desk Calendar 2026', cat: 'Books', revenue: 480, units: 24, issue: 'Low demand', issueBadge: 'badge-red' },
+      { name: 'Cotton Socks Pack', cat: 'Clothing', revenue: 720, units: 144, issue: 'Low margin', issueBadge: 'badge-amber' },
+      { name: 'Foam Roller Basic', cat: 'Sports', revenue: 960, units: 64, issue: 'High return rate', issueBadge: 'badge-red' },
+      { name: 'Scented Candle Set', cat: 'Home & Living', revenue: 1100, units: 55, issue: 'Seasonal dip', issueBadge: 'badge-amber' },
+      { name: 'Wired Earphones Lite', cat: 'Electronics', revenue: 1440, units: 180, issue: 'Superseded model', issueBadge: 'badge-purple' },
+    ];
+
+    const CAT_REVENUE = { Electronics: 17798, Clothing: 9630, 'Home & Living': 7340, Beauty: 6931, Sports: 6215, Books: 3210 };
+    const CATEGORIES = Object.keys(CAT_REVENUE);
+
+    const RANK_COLORS = ['#6175f5', '#2dd4a0', '#f5a623', '#f16464', '#b07ef8', '#38bdf8', '#fb923c', '#a3e635', '#e879f9', '#facc15'];
+    const RANK_EMOJI = ['🥇', '🥈', '🥉', '4th', '5th'];
+
+    /* ════════ STATE ════════ */
+    let activeCat = 'All';
+    let sortMetric = 'revenue';
+    let donutInst = null;
+    const sparkInsts = {};
+
+    /* ════════ CATEGORY PILLS ════════ */
+    function buildCatFilter() {
+      const allCats = [{ name: 'All', color: '#6175f5' }, ...CATEGORIES.map(c => ({ name: c, color: CAT_COLORS[c] }))];
+      document.getElementById('catFilter').innerHTML = allCats.map(c => {
+        const count = c.name === 'All' ? PRODUCTS.length : PRODUCTS.filter(p => p.cat === c.name).length;
+        return `<button class="cat-tab ${c.name === activeCat ? 'active' : ''}" onclick="setCat('${c.name}',this)">
+      <div class="cat-dot" style="background:${c.color};"></div>
+      ${c.name}
+      <span class="cat-count">(${count})</span>
+    </button>`;
+      }).join('');
+    }
+
+    function setCat(cat, btn) {
+      activeCat = cat;
+      document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildHBars();
+      buildLeaderboard();
+    }
+
+    /* ════════ HORIZONTAL BARS ════════ */
+    function buildHBars() {
+      let data = activeCat === 'All' ? [...PRODUCTS] : PRODUCTS.filter(p => p.cat === activeCat);
+      data.sort((a, b) => b[sortMetric] - a[sortMetric]);
+      data = data.slice(0, 10);
+
+      const maxVal = Math.max(...data.map(p => p[sortMetric]));
+      const fmt = p => sortMetric === 'revenue' ? '$' + p.revenue.toLocaleString()
+        : sortMetric === 'units' ? p.units + ' units'
+          : p.margin + '%';
+
+      document.getElementById('hbarList').innerHTML = data.map((p, i) => {
+        const pct = maxVal ? Math.round(p[sortMetric] / maxVal * 100) : 0;
+        const color = RANK_COLORS[i] || '#6175f5';
+        return `
+      <div class="hbar-item" style="animation:fadeUp 0.3s ease ${i * 0.035}s both;">
+        <div class="hbar-rank" style="background:${color}22; color:${color};">${i + 1}</div>
+        <div class="hbar-info">
+          <div class="hbar-name-row">
+            <span class="hbar-name" title="${p.name}">${p.name}</span>
+            <span class="badge ${CAT_BADGE[p.cat] || 'badge-blue'}">${p.cat}</span>
+          </div>
+          <div class="hbar-track">
+            <div class="hbar-fill" id="hfill${i}" style="background:${color}; width:0%;"></div>
+          </div>
+        </div>
+        <div class="hbar-meta">${fmt(p)}</div>
+      </div>`;
+      }).join('');
+
+      // animate bars after paint
+      requestAnimationFrame(() => {
+        data.forEach((p, i) => {
+          const pct = maxVal ? Math.round(p[sortMetric] / maxVal * 100) : 0;
+          const el = document.getElementById('hfill' + i);
+          if (el) setTimeout(() => { el.style.width = pct + '%'; }, 60 + i * 35);
+        });
+      });
+    }
+
+    function setMetric(metric, btn) {
+      sortMetric = metric;
+      document.querySelectorAll('#metricTabs .sort-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildHBars();
+    }
+
+    /* ════════ DONUT ════════ */
+    function buildDonut() {
+      const ctx = document.getElementById('donutChart').getContext('2d');
+      const labels = CATEGORIES;
+      const values = labels.map(l => CAT_REVENUE[l]);
+      const colors = labels.map(l => CAT_COLORS[l]);
+      const total = values.reduce((a, b) => a + b, 0);
+
+      if (donutInst) donutInst.destroy();
+      donutInst = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 10 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '70%',
+          animation: { duration: 750, easing: 'easeInOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(10,14,26,0.97)', borderColor: 'rgba(97,117,245,0.2)', borderWidth: 1,
+              titleColor: '#dce3f3', bodyColor: '#58617a', padding: 12, cornerRadius: 10,
+              callbacks: { label: c => ` ${c.label}: $${c.parsed.toLocaleString()} · ${Math.round(c.parsed / total * 100)}%` }
+            }
+          }
+        }
+      });
+
+      const maxRev = Math.max(...values);
+      document.getElementById('catLegend').innerHTML = labels.map((l, i) => `
+    <div class="cat-leg-item">
+      <div class="cat-leg-dot" style="background:${colors[i]};"></div>
+      <span class="cat-leg-name">${l}</span>
+      <div class="cat-leg-bar"><div class="cat-leg-fill" id="clf${i}" style="background:${colors[i]}; width:0%;"></div></div>
+      <span class="cat-leg-pct">${Math.round(values[i] / total * 100)}%</span>
+    </div>`).join('');
+
+      requestAnimationFrame(() => {
+        labels.forEach((l, i) => {
+          const el = document.getElementById('clf' + i);
+          if (el) setTimeout(() => { el.style.width = Math.round(values[i] / maxRev * 100) + '%'; }, 100 + i * 60);
+        });
+      });
+    }
+
+    /* ════════ LEADERBOARD CARDS ════════ */
+    function buildLeaderboard() {
+      const data = (activeCat === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.cat === activeCat)).slice(0, 5);
+
+      Object.values(sparkInsts).forEach(c => { try { c.destroy(); } catch (e) { } });
+
+      document.getElementById('leaderboardGrid').innerHTML = data.map((p, i) => {
+        const color = RANK_COLORS[i] || '#6175f5';
+        return `
+      <div class="prod-card" style="animation:fadeUp 0.4s ease ${0.28 + i * 0.07}s both;">
+        <div class="prod-card-top-bar" style="background:${color};"></div>
+        <div class="prod-card-rank-badge" style="background:${color}22; color:${color};">${RANK_EMOJI[i] || i + 1}</div>
+        <span class="prod-card-emoji">${p.emoji}</span>
+        <div class="prod-card-name">${p.name}</div>
+        <div class="prod-card-cat">${p.cat}</div>
+        <div class="prod-card-rev" style="color:${color};">$${p.revenue.toLocaleString()}</div>
+        <div class="prod-card-units">${p.units.toLocaleString()} units · ${p.margin}% margin</div>
+        <div class="spark-wrap"><canvas id="spark${i}"></canvas></div>
+      </div>`;
+      }).join('');
+
+      requestAnimationFrame(() => {
+        data.forEach((p, i) => {
+          const el = document.getElementById('spark' + i);
+          if (!el) return;
+          const color = RANK_COLORS[i] || '#6175f5';
+          const ctx = el.getContext('2d');
+          const grad = ctx.createLinearGradient(0, 0, 0, 34);
+          grad.addColorStop(0, color + '44');
+          grad.addColorStop(1, color + '00');
+          sparkInsts[i] = new Chart(ctx, {
+            type: 'line',
+            data: { labels: p.spark.map((_, j) => j), datasets: [{ data: p.spark, borderColor: color, backgroundColor: grad, fill: true, tension: 0.4, pointRadius: 0, borderWidth: 1.8 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } }
+          });
+        });
+      });
+    }
+
+    /* ════════ UNDERPERFORMER TABLE ════════ */
+    function buildUnderTable() {
+      document.getElementById('underTable').innerHTML = UNDERPERFORMERS.map(p => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">${CAT_EMOJI[p.cat] || '📦'}</span>
+          <span style="font-weight:500;">${p.name}</span>
+        </div>
+      </td>
+      <td><span class="badge ${CAT_BADGE[p.cat] || 'badge-blue'}">${p.cat}</span></td>
+      <td style="font-family:var(--font-head);font-weight:700;color:var(--red);">$${p.revenue.toLocaleString()}</td>
+      <td style="color:var(--text-sub);">${p.units}</td>
+      <td><span class="badge ${p.issueBadge}">${p.issue}</span></td>
+    </tr>`).join('');
+    }
+
+    /* ════════ STOCK STATUS ════════ */
+    function buildStockList() {
+      document.getElementById('stockList').innerHTML = PRODUCTS.slice(0, 8).map((p, i) => {
+        const pct = p.stockMax ? Math.round(p.stock / p.stockMax * 100) : 0;
+        const isOut = pct === 0;
+        const isLow = !isOut && pct < 20;
+        const color = isOut ? 'var(--red)' : isLow ? 'var(--amber)' : 'var(--green)';
+        const label = isOut ? 'Out of stock' : isLow ? `Low — ${pct}%` : `Healthy — ${pct}%`;
+        return `
+      <div class="stock-item">
+        <div style="min-width:0;flex:1;">
+          <div class="stock-name">${p.name}</div>
+          <div class="stock-track"><div class="stock-fill" id="stf${i}" style="background:${color};"></div></div>
+        </div>
+        <div class="stock-right">
+          <div class="stock-label" style="color:${color};">${label}</div>
+          <div class="stock-count">${p.stock} / ${p.stockMax}</div>
+        </div>
+      </div>`;
+      }).join('');
+
+      requestAnimationFrame(() => {
+        PRODUCTS.slice(0, 8).forEach((p, i) => {
+          const pct = p.stockMax ? Math.round(p.stock / p.stockMax * 100) : 0;
+          const el = document.getElementById('stf' + i);
+          if (el) setTimeout(() => { el.style.width = pct + '%'; }, 120 + i * 55);
+        });
+      });
+    }
+
+    /* ════════ PERIOD ════════ */
+    function setPeriod(period, btn) {
+      document.querySelectorAll('#periodTabs .sort-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const labels = { month: 'May 2026 · Month view', quarter: 'Q2 2026 · Quarter view', year: 'FY 2026 · Year view' };
+      document.getElementById('barSubLabel').textContent = `Ranked · ${labels[period]} · Click metric to re-sort`;
+      // TODO: GET /api/products/performance?period=${period}
+    }
+
+    /* ════════ EXPORT ════════ */
+    function exportData() {
+      const rows = PRODUCTS.map(p => [p.rank, `"${p.name}"`, p.cat, p.revenue, p.units, p.margin + '%', p.stock + '/' + p.stockMax].join(','));
+      const csv = ['Rank,Product,Category,Revenue ($),Units Sold,Margin,Stock', ...rows].join('\n');
+      Object.assign(document.createElement('a'), {
+        href: 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv),
+        download: 'salesiq_products_performance.csv'
+      }).click();
+    }
+
+    /* ════════ INIT ════════ */
+    buildCatFilter();
+    buildHBars();
+    buildDonut();
+    buildLeaderboard();
+    buildUnderTable();
+    buildStockList();
+  </script>
+</body>
+
+</html>

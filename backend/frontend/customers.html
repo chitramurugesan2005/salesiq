@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Analytics — SalesIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #05090d;
+      --bg2: #09101a;
+      --bg3: #0e1724;
+      --bg4: #131f2e;
+      --bg5: #192538;
+      --border: rgba(255, 255, 255, 0.055);
+      --border-h: rgba(255, 255, 255, 0.12);
+      --text: #d8e8f2;
+      --text-sub: #4e6278;
+      --text-dim: #1e2f40;
+      --teal: #0fb8a0;
+      --teal-g: rgba(15, 184, 160, 0.13);
+      --teal-glow: rgba(15, 184, 160, 0.07);
+      --blue: #3b82f6;
+      --blue-g: rgba(59, 130, 246, 0.13);
+      --amber: #f59e0b;
+      --amber-g: rgba(245, 158, 11, 0.12);
+      --rose: #f43f5e;
+      --rose-g: rgba(244, 63, 94, 0.12);
+      --purple: #a78bfa;
+      --purple-g: rgba(167, 139, 250, 0.12);
+      --lime: #84cc16;
+      --lime-g: rgba(132, 204, 22, 0.12);
+      --sidebar-w: 244px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(15, 184, 160, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 184, 160, 0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    /* orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 640px;
+      height: 640px;
+      background: radial-gradient(circle, #032e28 0%, transparent 65%);
+      top: -280px;
+      right: -100px;
+      opacity: 0.55;
+    }
+
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #07142e 0%, transparent 70%);
+      bottom: -160px;
+      left: 180px;
+      opacity: 0.45;
+    }
+
+    .orb-3 {
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, #1a0e30 0%, transparent 70%);
+      top: 48%;
+      left: 44%;
+      opacity: 0.22;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--teal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .logo-name {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .nav-section {
+      padding: 14px 10px 2px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-sub);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+      margin-bottom: 1px;
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke-width: 1.8;
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--teal-g);
+      color: var(--teal);
+      font-weight: 500;
+      border: 1px solid rgba(15, 184, 160, 0.2);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      cursor: pointer;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* ═══ MAIN ═══ */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      padding: 0 28px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(5, 9, 13, 0.88);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .page-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.2px;
+    }
+
+    .page-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-h);
+    }
+
+    .btn-teal {
+      background: var(--teal);
+      color: #021a17;
+      font-weight: 600;
+    }
+
+    .btn-teal:hover {
+      opacity: .88;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* period tabs */
+    .period-tabs {
+      display: flex;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .period-tab {
+      padding: 5px 13px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      transition: all 0.18s;
+    }
+
+    .period-tab.active {
+      background: var(--teal);
+      color: #021a17;
+    }
+
+    .period-tab:hover:not(.active) {
+      color: var(--text);
+    }
+
+    .content {
+      padding: 22px 28px 48px;
+      flex: 1;
+    }
+
+    /* ═══ KPI Strip ═══ */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      animation: fadeUp 0.4s ease both;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .kpi-card.t::before {
+      background: var(--teal)
+    }
+
+    .kpi-card.b::before {
+      background: var(--blue)
+    }
+
+    .kpi-card.a::before {
+      background: var(--amber)
+    }
+
+    .kpi-card.r::before {
+      background: var(--rose)
+    }
+
+    .kpi-card.p::before {
+      background: var(--purple)
+    }
+
+    .kpi-card:nth-child(1) {
+      animation-delay: .04s
+    }
+
+    .kpi-card:nth-child(2) {
+      animation-delay: .08s
+    }
+
+    .kpi-card:nth-child(3) {
+      animation-delay: .12s
+    }
+
+    .kpi-card:nth-child(4) {
+      animation-delay: .16s
+    }
+
+    .kpi-card:nth-child(5) {
+      animation-delay: .20s
+    }
+
+    .kpi-card:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .kpi-label {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+
+    .kpi-value {
+      font-family: var(--font-head);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .kpi-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+      margin-top: 5px;
+    }
+
+    .delta-up {
+      background: var(--teal-g);
+      color: var(--teal);
+    }
+
+    .delta-down {
+      background: var(--rose-g);
+      color: var(--rose);
+    }
+
+    .delta-neu {
+      background: var(--amber-g);
+      color: var(--amber);
+    }
+
+    /* ═══ Segment Tiles ═══ */
+    .seg-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.45s ease 0.2s both;
+    }
+
+    .seg-tile {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      transition: all 0.2s;
+      cursor: default;
+    }
+
+    .seg-tile:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .seg-tile-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .seg-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .seg-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 99px;
+    }
+
+    .seg-name {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .seg-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+
+    .seg-stats {
+      display: flex;
+      gap: 18px;
+    }
+
+    .seg-stat-val {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+
+    .seg-stat-label {
+      font-size: 10px;
+      color: var(--text-sub);
+      margin-top: 1px;
+    }
+
+    .seg-progress {
+      height: 4px;
+      background: var(--bg4);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .seg-prog-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+
+    /* ═══ 3-col chart area ═══ */
+    .charts-trio {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    /* ═══ card ═══ */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card:nth-child(1) {
+      animation-delay: .25s
+    }
+
+    .card:nth-child(2) {
+      animation-delay: .30s
+    }
+
+    .card:nth-child(3) {
+      animation-delay: .35s
+    }
+
+    .card-head {
+      padding: 18px 20px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 14px 20px 20px;
+    }
+
+    /* legend */
+    .leg {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .leg-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ═══ Donut centre ═══ */
+    .donut-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .donut-center {
+      position: absolute;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .donut-val {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .donut-lbl {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    /* ═══ 2-col bottom ═══ */
+    .bottom-duo {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    /* ═══ Top customers table ═══ */
+    .cust-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .cust-table th {
+      padding: 8px 14px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .cust-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .cust-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .cust-table tbody tr {
+      transition: background 0.14s;
+    }
+
+    .cust-table tbody tr:hover {
+      background: var(--bg3);
+    }
+
+    .cust-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .cust-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .cust-name {
+      font-weight: 500;
+    }
+
+    .cust-email {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    /* badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .badge-teal {
+      background: var(--teal-g);
+      color: var(--teal);
+      border: 1px solid rgba(15, 184, 160, 0.22);
+    }
+
+    .badge-blue {
+      background: var(--blue-g);
+      color: var(--blue);
+      border: 1px solid rgba(59, 130, 246, 0.22);
+    }
+
+    .badge-amber {
+      background: var(--amber-g);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.22);
+    }
+
+    .badge-rose {
+      background: var(--rose-g);
+      color: var(--rose);
+      border: 1px solid rgba(244, 63, 94, 0.22);
+    }
+
+    .badge-purple {
+      background: var(--purple-g);
+      color: var(--purple);
+      border: 1px solid rgba(167, 139, 250, 0.22);
+    }
+
+    .badge-lime {
+      background: var(--lime-g);
+      color: var(--lime);
+      border: 1px solid rgba(132, 204, 22, 0.22);
+    }
+
+    /* ═══ Acquisition funnel ═══ */
+    .funnel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .funnel-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .funnel-label {
+      font-size: 12px;
+      color: var(--text-sub);
+      width: 90px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .funnel-bar-wrap {
+      flex: 1;
+    }
+
+    .funnel-track {
+      height: 22px;
+      background: var(--bg4);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .funnel-fill {
+      height: 100%;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      transition: width 0.8s cubic-bezier(0.34, 1.1, 0.64, 1);
+    }
+
+    .funnel-count {
+      font-size: 11px;
+      color: var(--text-sub);
+      width: 48px;
+      text-align: right;
+    }
+
+    /* ═══ Insight chips ═══ */
+    .insight-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      animation: fadeUp 0.5s ease 0.45s both;
+    }
+
+    .insight-chip {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: all 0.2s;
+    }
+
+    .insight-chip:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .i-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .i-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .i-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .i-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.55;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @media(max-width:1200px) {
+      .charts-trio {
+        grid-template-columns: 1fr 1fr
+      }
+
+      ;
+
+      .kpi-strip {
+        grid-template-columns: repeat(3, 1fr)
+      }
+    }
+
+    @media(max-width:1050px) {
+      .bottom-duo {
+        grid-template-columns: 1fr
+      }
+
+      ;
+
+      .insight-row {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    @media(max-width:900px) {
+      .sidebar {
+        transform: translateX(-100%)
+      }
+
+      ;
+
+      .main {
+        margin-left: 0
+      }
+
+      ;
+
+      .content {
+        padding: 14px
+      }
+
+      ;
+
+      .kpi-strip {
+        grid-template-columns: 1fr 1fr
+      }
+
+      ;
+
+      .seg-row {
+        grid-template-columns: 1fr
+      }
+
+      ;
+
+      .charts-trio {
+        grid-template-columns: 1fr
+      }
+
+      ;
+
+      .insight-row {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="layout">
+
+    <!-- ═══════════ SIDEBAR ═══════════ -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-box">SQ</div>
+        <div>
+          <div class="logo-name">SalesIQ</div>
+          <div class="logo-sub">v1.0 · Team Project</div>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a class="nav-item" href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>Dashboard</a>
+        <a class="nav-item" href="sales-data.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+          </svg>Sales Data</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Analytics</div>
+        <a class="nav-item" href="trends.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>Trends</a>
+        <a class="nav-item" href="products.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>Products</a>
+        <a class="nav-item active" href="customers.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>Customers</a>
+        <a class="nav-item" href="regional.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>Regional</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">AI Modules</div>
+        <a class="nav-item" href="forecasting.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>Forecasting</a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83" />
+          </svg>Segmentation</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <a class="nav-item" href="reports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>Reports</a>
+        <a class="nav-item" href="login.html"><svg viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>Logout</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar">AD</div>
+          <div>
+            <div style="font-size:12px;font-weight:500;">Admin User</div>
+            <div style="font-size:10px;color:var(--text-sub);">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ═══════════ MAIN ═══════════ -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Customer Analytics</div>
+          <div class="page-sub">Module 6 · Frequent buyers · New vs returning · Spending behaviour · Segmentation</div>
+        </div>
+        <div class="topbar-right">
+          <div class="period-tabs">
+            <button class="period-tab" onclick="setPeriod('week',this)">Week</button>
+            <button class="period-tab active" onclick="setPeriod('month',this)">Month</button>
+            <button class="period-tab" onclick="setPeriod('quarter',this)">Quarter</button>
+            <button class="period-tab" onclick="setPeriod('year',this)">Year</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="exportCustomers()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- ═ KPI Strip ═ -->
+        <div class="kpi-strip">
+          <div class="kpi-card t">
+            <div class="kpi-label">Total Customers</div>
+            <div class="kpi-value">4,820</div>
+            <div class="kpi-sub">All-time registered</div>
+            <div class="kpi-delta delta-up">▲ +238 this month</div>
+          </div>
+          <div class="kpi-card b">
+            <div class="kpi-label">New Customers</div>
+            <div class="kpi-value">612</div>
+            <div class="kpi-sub">First purchase this period</div>
+            <div class="kpi-delta delta-up">▲ +18.4% vs prior</div>
+          </div>
+          <div class="kpi-card a">
+            <div class="kpi-label">Returning Customers</div>
+            <div class="kpi-value">1,536</div>
+            <div class="kpi-sub">Made repeat purchases</div>
+            <div class="kpi-delta delta-up">▲ +9.2% vs prior</div>
+          </div>
+          <div class="kpi-card r">
+            <div class="kpi-label">Churn Rate</div>
+            <div class="kpi-value">5.8%</div>
+            <div class="kpi-sub">Lost customers this period</div>
+            <div class="kpi-delta delta-down">▼ +1.2% vs prior</div>
+          </div>
+          <div class="kpi-card p">
+            <div class="kpi-label">Avg Lifetime Value</div>
+            <div class="kpi-value">$248</div>
+            <div class="kpi-sub">Per customer (LTV)</div>
+            <div class="kpi-delta delta-up">▲ +6.7% growth</div>
+          </div>
+        </div>
+
+        <!-- ═ Segment Tiles ═ -->
+        <div class="seg-row">
+          <!-- High Value -->
+          <div class="seg-tile">
+            <div class="seg-tile-top">
+              <div class="seg-icon" style="background:var(--teal-g); font-size:20px;">💎</div>
+              <span class="seg-badge badge-teal">High Value</span>
+            </div>
+            <div class="seg-name">Champions</div>
+            <div class="seg-desc">Frequent buyers with the highest spend. Brand advocates who drive 42% of total revenue
+              from just 18% of the base.</div>
+            <div class="seg-stats">
+              <div>
+                <div class="seg-stat-val" style="color:var(--teal);">864</div>
+                <div class="seg-stat-label">Customers</div>
+              </div>
+              <div>
+                <div class="seg-stat-val" style="color:var(--teal);">$520</div>
+                <div class="seg-stat-label">Avg Spend</div>
+              </div>
+              <div>
+                <div class="seg-stat-val" style="color:var(--teal);">8.4x</div>
+                <div class="seg-stat-label">Avg Orders</div>
+              </div>
+            </div>
+            <div class="seg-progress">
+              <div class="seg-prog-fill" id="spf1" style="background:var(--teal); width:0%;"></div>
+            </div>
+          </div>
+          <!-- Occasional -->
+          <div class="seg-tile">
+            <div class="seg-tile-top">
+              <div class="seg-icon" style="background:var(--amber-g); font-size:20px;">🛒</div>
+              <span class="seg-badge badge-amber">Occasional</span>
+            </div>
+            <div class="seg-name">Regular Buyers</div>
+            <div class="seg-desc">Purchase 2–4 times per quarter. Moderate spenders who respond well to re-engagement
+              campaigns and bundle offers.</div>
+            <div class="seg-stats">
+              <div>
+                <div class="seg-stat-val" style="color:var(--amber);">2,146</div>
+                <div class="seg-stat-label">Customers</div>
+              </div>
+              <div>
+                <div class="seg-stat-val" style="color:var(--amber);">$185</div>
+                <div class="seg-stat-label">Avg Spend</div>
+              </div>
+              <div>
+                <div class="seg-stat-val" style="color:var(--amber);">2.8x</div>
+                <div class="seg-stat-label">Avg Orders</div>
+              </div>
+            </div>
+            <div class="seg-progress">
+              <div class="seg-prog-fill" id="spf2" style="background:var(--amber); width:0%;"></div>
+            </div>
+          </div>
+          <!-- One-time -->
+          <div class="seg-tile">
+            <div class="seg-tile-top">
+              <div class="seg-icon" style="background:var(--rose-g); font-size:20px;">👤</div>
+              <span class="seg-badge badge-rose">One-Time</span>
+            </div>
+            <div class="seg-name">Single Purchasers</div>
+            <div class="seg-desc">Bought once and haven't returned. Largest group by count — prime candidates for
+              win-back sequences and first-order discounts.</div>
+            <div class="seg-stats">
+              <div>
+                <div class="seg-stat-val" style="color:var(--rose);">1,810</div>
+                <div class="seg-stat-label">Customers</div>
+              </div>
+              <div>
+                <div class="seg-stat-val" style="color:var(--rose);">$62</div>
+                <div class="seg-stat-label">Avg Spend</div>
+              </div>
+              <div>
+                <div class="seg-stat-val" style="color:var(--rose);">1.0x</div>
+                <div class="seg-stat-label">Avg Orders</div>
+              </div>
+            </div>
+            <div class="seg-progress">
+              <div class="seg-prog-fill" id="spf3" style="background:var(--rose); width:0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═ Charts trio ═ -->
+        <div class="charts-trio">
+
+          <!-- New vs Returning donut -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">New vs Returning</div>
+                <div class="card-sub">Customer acquisition split this period</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="donut-wrap" style="height:190px;">
+                <canvas id="nvr_chart"></canvas>
+                <div class="donut-center">
+                  <div class="donut-val" id="nvrCentreVal">2,148</div>
+                  <div class="donut-lbl">Total Orders</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+                  <div style="display:flex;align-items:center;gap:7px;">
+                    <div style="width:9px;height:9px;border-radius:3px;background:var(--teal);"></div><span
+                      style="color:var(--text-sub);">Returning</span>
+                  </div>
+                  <span style="font-weight:700;">1,536 · 71.5%</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+                  <div style="display:flex;align-items:center;gap:7px;">
+                    <div style="width:9px;height:9px;border-radius:3px;background:var(--blue);"></div><span
+                      style="color:var(--text-sub);">New</span>
+                  </div>
+                  <span style="font-weight:700;">612 · 28.5%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Purchase frequency grouped bar -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Purchase Frequency</div>
+                <div class="card-sub">Orders per customer per month</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="leg" style="margin-bottom:10px;">
+                <div class="leg-item">
+                  <div class="leg-dot" style="background:var(--teal);"></div>This Month
+                </div>
+                <div class="leg-item">
+                  <div class="leg-dot" style="background:rgba(15,184,160,0.28);"></div>Prior Month
+                </div>
+              </div>
+              <div style="position:relative;height:168px;">
+                <canvas id="freq_chart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spending behaviour grouped bar -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Spending Behaviour</div>
+                <div class="card-sub">Avg spend per segment by category</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="leg" style="margin-bottom:10px;">
+                <div class="leg-item">
+                  <div class="leg-dot" style="background:var(--teal);"></div>Champions
+                </div>
+                <div class="leg-item">
+                  <div class="leg-dot" style="background:var(--amber);"></div>Regular
+                </div>
+                <div class="leg-item">
+                  <div class="leg-dot" style="background:var(--rose);"></div>One-time
+                </div>
+              </div>
+              <div style="position:relative;height:168px;">
+                <canvas id="spend_chart"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ═ Bottom duo ═ -->
+        <div class="bottom-duo">
+
+          <!-- Top customers table -->
+          <div class="card" style="animation-delay:0.38s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Top Customers by Spend</div>
+                <div class="card-sub">Highest lifetime value customers this period</div>
+              </div>
+              <span class="badge badge-teal" style="flex-shrink:0;margin-top:2px;">Top 10</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="cust-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Customer</th>
+                    <th>Segment</th>
+                    <th>Orders</th>
+                    <th>Total Spend</th>
+                    <th>LTV</th>
+                  </tr>
+                </thead>
+                <tbody id="custTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Acquisition funnel -->
+          <div class="card" style="animation-delay:0.44s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Acquisition Funnel</div>
+                <div class="card-sub">Visitor → buyer conversion pipeline</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="funnel-list" id="funnelList"></div>
+              <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                  <span style="color:var(--text-sub);">Overall conversion rate</span>
+                  <span style="font-family:var(--font-head);font-weight:700;color:var(--teal);">3.68%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;">
+                  <span style="color:var(--text-sub);">Checkout abandonment</span>
+                  <span style="font-family:var(--font-head);font-weight:700;color:var(--amber);">68.4%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ═ Insight chips ═ -->
+        <div class="insight-row">
+          <div class="insight-chip">
+            <div class="i-icon" style="background:var(--teal-g);color:var(--teal);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">Champion Segment Growing</div>
+              <div class="i-desc">High-value Champions grew by <strong style="color:var(--teal);">+14.2%</strong> this
+                quarter. These 864 customers are generating 42% of all revenue — nurture them with loyalty rewards.
+              </div>
+            </div>
+          </div>
+          <div class="insight-chip">
+            <div class="i-icon" style="background:var(--rose-g);color:var(--rose);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">Win-Back Opportunity</div>
+              <div class="i-desc"><strong style="color:var(--rose);">1,810 one-time buyers</strong> haven't returned. A
+                targeted win-back email with a 10% discount could recover an estimated <strong
+                  style="color:var(--rose);">$112K</strong> in dormant revenue.</div>
+            </div>
+          </div>
+          <div class="insight-chip">
+            <div class="i-icon" style="background:var(--amber-g);color:var(--amber);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+            </div>
+            <div>
+              <div class="i-title">Retention Rate Healthy</div>
+              <div class="i-desc">Returning customers represent <strong style="color:var(--amber);">71.5%</strong> of
+                orders this period. Retention is strong — focus on increasing basket size through upsell campaigns.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══════════════════ SCRIPTS ═══════════════════ -->
+  <script>
+    /* ═══ DATA ═══ */
+    const TOP_CUSTOMERS = [
+      { name: 'Arjun Mehta', email: 'arjun.m@email.com', seg: 'Champions', segBadge: 'badge-teal', orders: 24, spend: 6240, ltv: 520 },
+      { name: 'Priya Sharma', email: 'priya.s@email.com', seg: 'Champions', segBadge: 'badge-teal', orders: 21, spend: 5880, ltv: 495 },
+      { name: 'Rahul Verma', email: 'rahul.v@email.com', seg: 'Champions', segBadge: 'badge-teal', orders: 19, spend: 5460, ltv: 478 },
+      { name: 'Sneha Nair', email: 'sneha.n@email.com', seg: 'Champions', segBadge: 'badge-teal', orders: 17, spend: 4990, ltv: 442 },
+      { name: 'Karthik Raja', email: 'karthik.r@email.com', seg: 'Champions', segBadge: 'badge-teal', orders: 15, spend: 4320, ltv: 398 },
+      { name: 'Divya Krishnan', email: 'divya.k@email.com', seg: 'Regular', segBadge: 'badge-amber', orders: 9, spend: 2880, ltv: 210 },
+      { name: 'Amar Singh', email: 'amar.s@email.com', seg: 'Regular', segBadge: 'badge-amber', orders: 8, spend: 2560, ltv: 195 },
+      { name: 'Lakshmi Patel', email: 'lakshmi.p@email.com', seg: 'Regular', segBadge: 'badge-amber', orders: 7, spend: 2240, ltv: 182 },
+      { name: 'Vijay Kumar', email: 'vijay.k@email.com', seg: 'Regular', segBadge: 'badge-amber', orders: 6, spend: 1920, ltv: 168 },
+      { name: 'Riya Desai', email: 'riya.d@email.com', seg: 'One-Time', segBadge: 'badge-rose', orders: 1, spend: 420, ltv: 62 },
+    ];
+
+    const AVATAR_COLORS = ['#0fb8a0', '#3b82f6', '#f59e0b', '#f43f5e', '#a78bfa', '#84cc16', '#0fb8a0', '#3b82f6', '#f59e0b', '#f43f5e'];
+
+    const FUNNEL = [
+      { label: 'Visitors', count: 58400, pct: 100, color: '#0fb8a0' },
+      { label: 'Browsed', count: 31200, pct: 53, color: '#3b82f6' },
+      { label: 'Cart Add', count: 9840, pct: 17, color: '#f59e0b' },
+      { label: 'Checkout', count: 3120, pct: 5.3, color: '#f43f5e' },
+      { label: 'Purchased', count: 2148, pct: 3.7, color: '#a78bfa' },
+    ];
+
+    let nvrChart, freqChart, spendChart;
+
+    /* ═══ Charts ═══ */
+    const TOOLTIP_DEFAULTS = {
+      backgroundColor: 'rgba(9,16,26,0.97)',
+      borderColor: 'rgba(15,184,160,0.2)', borderWidth: 1,
+      titleColor: '#d8e8f2', bodyColor: '#4e6278',
+      padding: 12, cornerRadius: 10,
+    };
+
+    function buildNVR() {
+      const ctx = document.getElementById('nvr_chart').getContext('2d');
+      if (nvrChart) nvrChart.destroy();
+      nvrChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Returning', 'New'],
+          datasets: [{
+            data: [1536, 612],
+            backgroundColor: ['#0fb8a0', '#3b82f6'],
+            borderWidth: 0, hoverOffset: 10,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '68%',
+          animation: { duration: 750, easing: 'easeInOutQuart' },
+          plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_DEFAULTS, callbacks: { label: c => ` ${c.label}: ${c.parsed.toLocaleString()} customers` } } }
+        }
+      });
+    }
+
+    function buildFreq() {
+      const ctx = document.getElementById('freq_chart').getContext('2d');
+      if (freqChart) freqChart.destroy();
+      freqChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['1x', '2x', '3x', '4x', '5x', '6x+'],
+          datasets: [
+            { label: 'This Month', data: [1810, 980, 620, 380, 215, 143], backgroundColor: 'rgba(15,184,160,0.8)', borderRadius: 5, borderSkipped: false },
+            { label: 'Prior Month', data: [1650, 910, 580, 340, 190, 120], backgroundColor: 'rgba(15,184,160,0.25)', borderRadius: 5, borderSkipped: false },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_DEFAULTS, callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toLocaleString()} customers` } } },
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#4e6278', font: { size: 11 } } },
+            y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.035)' }, ticks: { color: '#4e6278', font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function buildSpend() {
+      const ctx = document.getElementById('spend_chart').getContext('2d');
+      if (spendChart) spendChart.destroy();
+      spendChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Electr.', 'Clothing', 'Home', 'Beauty', 'Sports'],
+          datasets: [
+            { label: 'Champions', data: [280, 195, 145, 165, 120], backgroundColor: 'rgba(15,184,160,0.8)', borderRadius: 4, borderSkipped: false },
+            { label: 'Regular', data: [130, 95, 75, 88, 62], backgroundColor: 'rgba(245,158,11,0.75)', borderRadius: 4, borderSkipped: false },
+            { label: 'One-Time', data: [45, 32, 28, 30, 22], backgroundColor: 'rgba(244,63,94,0.65)', borderRadius: 4, borderSkipped: false },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_DEFAULTS, callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y}` } } },
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#4e6278', font: { size: 10 } } },
+            y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.035)' }, ticks: { color: '#4e6278', font: { size: 10 }, callback: v => '$' + v } }
+          }
+        }
+      });
+    }
+
+    /* ═══ Top customers table ═══ */
+    function buildCustTable() {
+      document.getElementById('custTable').innerHTML = TOP_CUSTOMERS.map((c, i) => {
+        const initials = c.name.split(' ').map(w => w[0]).join('').slice(0, 2);
+        return `
+      <tr>
+        <td style="color:var(--text-sub);font-weight:600;font-size:11px;">${i + 1}</td>
+        <td>
+          <div class="cust-name-cell">
+            <div class="cust-avatar" style="background:${AVATAR_COLORS[i]};">${initials}</div>
+            <div>
+              <div class="cust-name">${c.name}</div>
+              <div class="cust-email">${c.email}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge ${c.segBadge}">${c.seg}</span></td>
+        <td style="color:var(--text-sub);">${c.orders}</td>
+        <td style="font-family:var(--font-head);font-weight:700;">$${c.spend.toLocaleString()}</td>
+        <td style="color:var(--teal);font-weight:600;">$${c.ltv}</td>
+      </tr>`;
+      }).join('');
+    }
+
+    /* ═══ Funnel ═══ */
+    function buildFunnel() {
+      document.getElementById('funnelList').innerHTML = FUNNEL.map((f, i) => `
+    <div class="funnel-step" style="animation:fadeUp 0.35s ease ${0.3 + i * 0.07}s both;">
+      <div class="funnel-label">${f.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-track">
+          <div class="funnel-fill" id="ff${i}" style="width:0%;background:${f.color};">
+            ${f.pct >= 10 ? f.pct + '%' : ''}
+          </div>
+        </div>
+      </div>
+      <div class="funnel-count">${f.count.toLocaleString()}</div>
+    </div>`).join('');
+
+      requestAnimationFrame(() => {
+        FUNNEL.forEach((f, i) => {
+          const el = document.getElementById('ff' + i);
+          if (el) setTimeout(() => { el.style.width = f.pct + '%'; }, 120 + i * 80);
+        });
+      });
+    }
+
+    /* ═══ Segment progress bars ═══ */
+    function animateSegBars() {
+      const bars = [
+        { id: 'spf1', pct: 18 },  // champions: 864/4820
+        { id: 'spf2', pct: 44 },  // regular: 2146/4820
+        { id: 'spf3', pct: 38 },  // one-time: 1810/4820
+      ];
+      bars.forEach((b, i) => {
+        const el = document.getElementById(b.id);
+        if (!el) return;
+        setTimeout(() => { el.style.width = b.pct + '%'; }, 200 + i * 100);
+      });
+    }
+
+    /* ═══ Period switcher ═══ */
+    function setPeriod(period, btn) {
+      document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // TODO: GET /api/customers/analytics?period=${period}
+      const labels = { week: '7 days', month: 'This month', quarter: 'Q2 2026', year: 'FY 2026' };
+      document.querySelector('.page-sub').textContent = `Module 6 · ${labels[period]} · Frequent buyers · New vs returning · Spending behaviour`;
+    }
+
+    /* ═══ Export ═══ */
+    function exportCustomers() {
+      const rows = TOP_CUSTOMERS.map(c => [`"${c.name}"`, `"${c.email}"`, c.seg, c.orders, '$' + c.spend, '$' + c.ltv].join(','));
+      const csv = ['Name,Email,Segment,Orders,Total Spend,LTV', ...rows].join('\n');
+      Object.assign(document.createElement('a'), {
+        href: 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv),
+        download: 'salesiq_customers.csv'
+      }).click();
+    }
+
+    /* ═══ INIT ═══ */
+    buildNVR();
+    buildFreq();
+    buildSpend();
+    buildCustTable();
+    buildFunnel();
+    animateSegBars();
+  </script>
+</body>
+
+</html>

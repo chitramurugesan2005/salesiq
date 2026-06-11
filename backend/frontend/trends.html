@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales Trend Analysis — SalesIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #05070e;
+      --bg2: #090c18;
+      --bg3: #0e1220;
+      --bg4: #141828;
+      --bg5: #1a2034;
+      --border: rgba(255, 255, 255, 0.055);
+      --border-h: rgba(255, 255, 255, 0.12);
+      --text: #dde4f4;
+      --text-sub: #5a6278;
+      --text-dim: #252b3e;
+      --accent: #5b8def;
+      --accent-g: rgba(91, 141, 239, 0.14);
+      --accent-glow: rgba(91, 141, 239, 0.08);
+      --green: #34d399;
+      --green-g: rgba(52, 211, 153, 0.12);
+      --amber: #fbbf24;
+      --amber-g: rgba(251, 191, 36, 0.12);
+      --red: #f87171;
+      --red-g: rgba(248, 113, 113, 0.12);
+      --purple: #c084fc;
+      --cyan: #22d3ee;
+      --sidebar-w: 244px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated grid background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(91, 141, 239, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 141, 239, 0.03) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    /* ── Atmospheric orbs ── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, #0a1e5e 0%, transparent 65%);
+      top: -300px;
+      right: -150px;
+      opacity: 0.55;
+    }
+
+    .orb-2 {
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, #061e30 0%, transparent 70%);
+      bottom: -150px;
+      left: 160px;
+      opacity: 0.4;
+    }
+
+    .orb-3 {
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, #1a0e3a 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      opacity: 0.25;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ════════════════ SIDEBAR ════════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .logo-name {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .nav-section {
+      padding: 14px 10px 2px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-sub);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+      margin-bottom: 1px;
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke-width: 1.8;
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--accent-g);
+      color: var(--accent);
+      font-weight: 500;
+      border: 1px solid rgba(91, 141, 239, 0.18);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      cursor: pointer;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .user-name-t {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .user-role-t {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    /* ════════════════ MAIN ════════════════ */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      padding: 0 28px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(5, 7, 14, 0.85);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left .page-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.2px;
+    }
+
+    .topbar-left .page-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-h);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.88;
+    }
+
+    /* ── Content ── */
+    .content {
+      padding: 22px 28px 40px;
+      flex: 1;
+    }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* Granularity tabs */
+    .gran-tabs {
+      display: flex;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .gran-tab {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      transition: all 0.18s;
+      letter-spacing: 0.02em;
+    }
+
+    .gran-tab.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(91, 141, 239, 0.35);
+    }
+
+    .gran-tab:hover:not(.active) {
+      color: var(--text);
+    }
+
+    /* Chart type tabs */
+    .chart-type-tabs {
+      display: flex;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .ct-tab {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ct-tab svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .ct-tab.active {
+      background: var(--bg4);
+      color: var(--text);
+      border: 1px solid var(--border-h);
+    }
+
+    .ct-tab:hover:not(.active) {
+      color: var(--text);
+    }
+
+    /* Date range inputs */
+    .date-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 12px;
+      padding: 6px 10px;
+      outline: none;
+      transition: border-color 0.18s;
+      cursor: pointer;
+    }
+
+    .date-input:focus {
+      border-color: var(--accent);
+    }
+
+    /* Compare toggle */
+    .compare-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--bg4);
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      transition: all 0.25s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text-sub);
+      bottom: 2px;
+      left: 2px;
+      transition: all 0.25s;
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle-switch input:checked+.toggle-slider::before {
+      transform: translateX(16px);
+      background: #fff;
+    }
+
+    .compare-label {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    /* ── Summary stat strip ── */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-chip {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      animation: fadeUp 0.4s ease both;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .stat-chip:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .stat-chip:nth-child(1) {
+      animation-delay: 0.04s;
+    }
+
+    .stat-chip:nth-child(2) {
+      animation-delay: 0.08s;
+    }
+
+    .stat-chip:nth-child(3) {
+      animation-delay: 0.12s;
+    }
+
+    .stat-chip:nth-child(4) {
+      animation-delay: 0.16s;
+    }
+
+    .stat-chip:nth-child(5) {
+      animation-delay: 0.20s;
+    }
+
+    .stat-chip-label {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .stat-chip-value {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-chip-delta {
+      font-size: 11px;
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .delta-up {
+      color: var(--green);
+    }
+
+    .delta-down {
+      color: var(--red);
+    }
+
+    /* ── Main chart card ── */
+    .main-chart-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+      overflow: hidden;
+      animation: fadeUp 0.45s ease 0.22s both;
+    }
+
+    .chart-card-head {
+      padding: 18px 22px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .chart-card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.2px;
+    }
+
+    .chart-card-sub {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding: 0 22px 12px;
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+
+    .leg-line {
+      width: 24px;
+      height: 3px;
+      border-radius: 99px;
+    }
+
+    .leg-dash {
+      width: 24px;
+      height: 0;
+      border-top: 2px dashed;
+    }
+
+    .chart-area {
+      padding: 4px 18px 18px;
+      position: relative;
+    }
+
+    /* ── Bottom grid ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    /* ── Card shell ── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card:nth-child(1) {
+      animation-delay: 0.3s;
+    }
+
+    .card:nth-child(2) {
+      animation-delay: 0.36s;
+    }
+
+    .card-head {
+      padding: 16px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 12px 18px 18px;
+    }
+
+    /* ── Heatmap ── */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 4px;
+    }
+
+    .hm-month {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .hm-label {
+      font-size: 9px;
+      color: var(--text-sub);
+      text-align: center;
+      padding-bottom: 4px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .hm-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      transition: transform 0.15s;
+      cursor: pointer;
+    }
+
+    .hm-cell:hover {
+      transform: scale(1.25);
+      z-index: 2;
+    }
+
+    /* ── YoY bar group ── */
+    .yoy-row {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .yoy-label {
+      font-size: 11px;
+      color: var(--text-sub);
+      text-align: right;
+    }
+
+    .yoy-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .yoy-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .yoy-bar {
+      height: 7px;
+      border-radius: 99px;
+      transition: width 0.6s ease;
+    }
+
+    .yoy-val {
+      font-size: 11px;
+      color: var(--text-sub);
+      white-space: nowrap;
+    }
+
+    /* ── Peak table ── */
+    .peak-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .peak-table th {
+      padding: 7px 10px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .peak-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .peak-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .peak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .peak-best {
+      background: var(--green-g);
+      color: var(--green);
+      border: 1px solid rgba(52, 211, 153, 0.2);
+    }
+
+    .peak-worst {
+      background: var(--red-g);
+      color: var(--red);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+    }
+
+    /* ── Insight cards ── */
+    .insight-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      animation: fadeUp 0.5s ease 0.45s both;
+    }
+
+    .insight-chip {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: default;
+    }
+
+    .insight-chip:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .insight-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .insight-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .insight-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .insight-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .stat-strip {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .insight-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main {
+        margin-left: 0;
+      }
+
+      .content {
+        padding: 14px;
+      }
+
+      .stat-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .insight-row {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-bar {
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="layout">
+
+    <!-- ════════════════ SIDEBAR ════════════════ -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-box">SQ</div>
+        <div>
+          <div class="logo-name">SalesIQ</div>
+          <div class="logo-sub">v1.0 · Team Project</div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a class="nav-item" href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          Dashboard
+        </a>
+        <a class="nav-item" href="sales-data.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+          </svg>
+          Sales Data
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Analytics</div>
+        <a class="nav-item active" href="trends.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          Trends
+        </a>
+        <a class="nav-item" href="products.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>
+          Products
+        </a>
+        <a class="nav-item" href="customers.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>
+          Customers
+        </a>
+        <a class="nav-item" href="regional.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>
+          Regional
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">AI Modules</div>
+        <a class="nav-item" href="forecasting.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          Forecasting
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83" />
+          </svg>
+          Segmentation
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <a class="nav-item" href="reports.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          Reports
+        </a>
+        <a class="nav-item" href="login.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          Logout
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar">AD</div>
+          <div>
+            <div class="user-name-t">Admin User</div>
+            <div class="user-role-t">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ════════════════ MAIN ════════════════ -->
+    <main class="main">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="page-title">Sales Trend Analysis</div>
+          <div class="page-sub">Module 4 · Daily, Monthly & Yearly sales with date range filters</div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost" onclick="exportChart()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export
+          </button>
+          <button class="btn btn-primary" onclick="refreshData()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- ── Filter bar ── -->
+        <div class="filter-bar">
+
+          <!-- Granularity -->
+          <div class="filter-group">
+            <span class="filter-label">View</span>
+            <div class="gran-tabs">
+              <button class="gran-tab" onclick="setGranularity('daily',this)">Daily</button>
+              <button class="gran-tab active" onclick="setGranularity('monthly',this)">Monthly</button>
+              <button class="gran-tab" onclick="setGranularity('yearly',this)">Yearly</button>
+            </div>
+          </div>
+
+          <!-- Chart type -->
+          <div class="filter-group">
+            <span class="filter-label">Chart</span>
+            <div class="chart-type-tabs">
+              <button class="ct-tab active" id="ctLine" onclick="setChartType('line',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+                Line
+              </button>
+              <button class="ct-tab" id="ctBar" onclick="setChartType('bar',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                Bar
+              </button>
+              <button class="ct-tab" id="ctArea" onclick="setChartType('area',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 20 Q 6 4, 12 10 T 22 6 V 20 Z" />
+                </svg>
+                Area
+              </button>
+            </div>
+          </div>
+
+          <!-- Date range -->
+          <div class="filter-group">
+            <span class="filter-label">From</span>
+            <input type="date" class="date-input" id="dateFrom" value="2026-01-01" onchange="applyDateFilter()" />
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">To</span>
+            <input type="date" class="date-input" id="dateTo" value="2026-05-18" onchange="applyDateFilter()" />
+          </div>
+
+          <!-- Quick range presets -->
+          <div class="filter-group" style="gap:4px;">
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="setPreset('1m')">1M</button>
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="setPreset('3m')">3M</button>
+            <button class="btn btn-ghost"
+              style="padding:5px 10px;font-size:11px;background:var(--accent-g);color:var(--accent);border-color:rgba(91,141,239,0.2);"
+              id="presetActive" onclick="setPreset('6m')">6M</button>
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="setPreset('1y')">1Y</button>
+          </div>
+
+          <!-- Compare toggle -->
+          <div class="compare-wrap">
+            <span class="compare-label">vs Prior Period</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="compareToggle" onchange="toggleCompare()" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── Summary stat strip ── -->
+        <div class="stat-strip">
+          <div class="stat-chip">
+            <div class="stat-chip-label">Total Revenue</div>
+            <div class="stat-chip-value" id="stRevenue">$226.8K</div>
+            <div class="stat-chip-delta delta-up" id="stRevDelta">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+              +18.2% vs prior
+            </div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-label">Total Orders</div>
+            <div class="stat-chip-value" id="stOrders">5,848</div>
+            <div class="stat-chip-delta delta-up">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+              +12.3% vs prior
+            </div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-label">Best Month</div>
+            <div class="stat-chip-value" style="color:var(--green);">May '26</div>
+            <div class="stat-chip-delta" style="color:var(--text-sub);">$84,320 peak</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-label">Avg Monthly</div>
+            <div class="stat-chip-value">$45.4K</div>
+            <div class="stat-chip-delta delta-up">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+              Trending up
+            </div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-label">Growth Rate</div>
+            <div class="stat-chip-value" style="color:var(--accent);">+23.9%</div>
+            <div class="stat-chip-delta delta-up">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+              QoQ improvement
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Main trend chart ── -->
+        <div class="main-chart-card">
+          <div class="chart-card-head">
+            <div>
+              <div class="chart-card-title" id="mainChartTitle">Monthly Sales Trend — Jan to May 2026</div>
+              <div class="chart-card-sub" id="mainChartSub">Revenue and order volume over time · Toggle compare to see
+                prior period overlay</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);">
+                <div
+                  style="width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(52,211,153,0.4);animation:pulse 2s infinite;">
+                </div>
+                Live
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-legend" id="mainLegend">
+            <div class="leg-item">
+              <div class="leg-line" style="background:var(--accent);"></div>
+              <span>Revenue 2026</span>
+            </div>
+            <div class="leg-item" id="legOrders">
+              <div class="leg-line" style="background:var(--green);"></div>
+              <span>Orders 2026</span>
+            </div>
+            <div class="leg-item" id="legPrior" style="display:none;">
+              <div class="leg-dash" style="border-color:rgba(91,141,239,0.4);"></div>
+              <span style="color:var(--text-sub);">Revenue 2025</span>
+            </div>
+          </div>
+
+          <div class="chart-area">
+            <div style="position:relative; height:300px;">
+              <canvas id="mainChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Bottom grid: Volume histogram + YoY comparison ── -->
+        <div class="bottom-grid">
+
+          <!-- Volume / order histogram -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Order Volume Distribution</div>
+                <div class="card-sub">Monthly order counts with peak markers</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="position:relative;height:200px;">
+                <canvas id="volumeChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Revenue heatmap (monthly intensity grid) -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Revenue Intensity Heatmap</div>
+                <div class="card-sub">Relative performance per month — hover to inspect</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding-top:16px;">
+              <div id="heatmapGrid" class="heatmap-grid"></div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+                <span style="font-size:10px;color:var(--text-sub);">Low</span>
+                <div style="display:flex;gap:3px;">
+                  <div style="width:16px;height:10px;border-radius:3px;background:rgba(91,141,239,0.08);"></div>
+                  <div style="width:16px;height:10px;border-radius:3px;background:rgba(91,141,239,0.2);"></div>
+                  <div style="width:16px;height:10px;border-radius:3px;background:rgba(91,141,239,0.4);"></div>
+                  <div style="width:16px;height:10px;border-radius:3px;background:rgba(91,141,239,0.65);"></div>
+                  <div style="width:16px;height:10px;border-radius:3px;background:rgba(91,141,239,0.9);"></div>
+                </div>
+                <span style="font-size:10px;color:var(--text-sub);">High</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── YoY Comparison + Peak table ── -->
+        <div class="bottom-grid" style="margin-bottom:18px;">
+
+          <!-- YoY grouped bars -->
+          <div class="card" style="animation-delay:0.38s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Year-over-Year Comparison</div>
+                <div class="card-sub">2025 vs 2026 monthly revenue</div>
+              </div>
+            </div>
+            <div class="card-body" id="yoyBars"></div>
+          </div>
+
+          <!-- Peak / Trough table -->
+          <div class="card" style="animation-delay:0.42s;">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Peak & Trough Analysis</div>
+                <div class="card-sub">Best and worst performing periods</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="peak-table">
+                <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Revenue</th>
+                    <th>Orders</th>
+                    <th>vs Avg</th>
+                    <th>Tag</th>
+                  </tr>
+                </thead>
+                <tbody id="peakTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── AI Insight chips ── -->
+        <div class="insight-row">
+          <div class="insight-chip">
+            <div class="insight-icon" style="background:var(--accent-g);color:var(--accent);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+            </div>
+            <div>
+              <div class="insight-title">Strong Upward Trend</div>
+              <div class="insight-desc">Revenue has grown consistently month-over-month with a compound monthly growth
+                rate of <strong style="color:var(--accent);">+8.3%</strong> since January.</div>
+            </div>
+          </div>
+          <div class="insight-chip">
+            <div class="insight-icon" style="background:var(--amber-g);color:var(--amber);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <div>
+              <div class="insight-title">February Dip Detected</div>
+              <div class="insight-desc">February 2026 showed a <strong style="color:var(--amber);">−9.4%</strong>
+                revenue dip vs January — potentially seasonal. Monitor next Feb for pattern.</div>
+            </div>
+          </div>
+          <div class="insight-chip">
+            <div class="insight-icon" style="background:var(--green-g);color:var(--green);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <div>
+              <div class="insight-title">May is Record-Breaking</div>
+              <div class="insight-desc">May 2026 hit <strong style="color:var(--green);">$84,320</strong> — the highest
+                revenue month on record, surpassing the previous peak by <strong
+                  style="color:var(--green);">+13.2%</strong>.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══════════════════ SCRIPTS ═══════════════════ -->
+  <script>
+    /* ════════════════ DATA ════════════════ */
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const DATA = {
+      monthly: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+        revenue: [52000, 47100, 63000, 68000, 84320],
+        orders: [1300, 1180, 1580, 1720, 2148],
+        prior: [41000, 43500, 50000, 58000, 74500], // 2025 comparison
+      },
+      daily: {
+        labels: Array.from({ length: 30 }, (_, i) => `May ${i + 1}`),
+        revenue: [1800, 2100, 1950, 2400, 2200, 2800, 3100, 2700, 3300, 2900, 3500, 3200, 3800, 3600, 4100, 3900, 4400, 4200, 4700, 4500, 5000, 4800, 5200, 5100, 5500, 5300, 5700, 5600, 6000, 5800],
+        orders: [44, 52, 48, 60, 55, 70, 78, 67, 82, 72, 88, 80, 95, 90, 103, 97, 110, 105, 117, 112, 125, 120, 130, 128, 137, 133, 142, 140, 150, 145],
+        prior: [1600, 1900, 1750, 2100, 1950, 2500, 2800, 2400, 2900, 2600, 3100, 2800, 3300, 3200, 3600, 3400, 3900, 3700, 4100, 3900, 4300, 4100, 4500, 4400, 4700, 4500, 4900, 4800, 5100, 5000],
+      },
+      yearly: {
+        labels: ['2022', '2023', '2024', '2025', '2026 (YTD)'],
+        revenue: [380000, 490000, 620000, 780000, 314420],
+        orders: [9500, 12200, 15500, 19600, 7928],
+        prior: [300000, 380000, 490000, 620000, 260000],
+      }
+    };
+
+    const HEATMAP_DATA = {
+      // 5 weeks per month × 5 months (Jan–May 2026), intensities 0–1
+      Jan: [0.38, 0.42, 0.35, 0.48, 0.44],
+      Feb: [0.32, 0.30, 0.28, 0.35, 0.31],
+      Mar: [0.50, 0.55, 0.52, 0.60, 0.58],
+      Apr: [0.60, 0.65, 0.62, 0.70, 0.68],
+      May: [0.72, 0.78, 0.82, 0.88, 0.95],
+    };
+
+    const YOY = [
+      { m: 'Jan', v25: 41000, v26: 52000 },
+      { m: 'Feb', v25: 43500, v26: 47100 },
+      { m: 'Mar', v25: 50000, v26: 63000 },
+      { m: 'Apr', v25: 58000, v26: 68000 },
+      { m: 'May', v25: 74500, v26: 84320 },
+    ];
+
+    const PEAKS = [
+      { period: 'May 2026', revenue: '$84,320', orders: '2,148', delta: '+85.7%', tag: 'best' },
+      { period: 'Apr 2026', revenue: '$68,000', orders: '1,720', delta: '+49.7%', tag: 'best' },
+      { period: 'Mar 2026', revenue: '$63,000', orders: '1,580', delta: '+38.6%', tag: '' },
+      { period: 'Jan 2026', revenue: '$52,000', orders: '1,300', delta: '+14.4%', tag: '' },
+      { period: 'Feb 2026', revenue: '$47,100', orders: '1,180', delta: '+3.5%', tag: 'worst' },
+    ];
+
+    /* ════════════════ STATE ════════════════ */
+    let granularity = 'monthly';
+    let chartType = 'line';
+    let comparing = false;
+    let mainChartInst, volumeChartInst;
+
+    /* ════════════════ MAIN CHART ════════════════ */
+    function buildMainChart() {
+      const d = DATA[granularity];
+      const ctx = document.getElementById('mainChart').getContext('2d');
+
+      const gradBlue = ctx.createLinearGradient(0, 0, 0, 300);
+      gradBlue.addColorStop(0, 'rgba(91,141,239,0.3)');
+      gradBlue.addColorStop(1, 'rgba(91,141,239,0.01)');
+
+      const gradGreen = ctx.createLinearGradient(0, 0, 0, 300);
+      gradGreen.addColorStop(0, 'rgba(52,211,153,0.2)');
+      gradGreen.addColorStop(1, 'rgba(52,211,153,0.01)');
+
+      const isBar = chartType === 'bar';
+      const isArea = chartType === 'area';
+      const type = isBar ? 'bar' : 'line';
+
+      const datasets = [
+        {
+          label: 'Revenue 2026',
+          data: d.revenue,
+          borderColor: '#5b8def',
+          backgroundColor: isBar ? 'rgba(91,141,239,0.7)' : (isArea ? gradBlue : 'transparent'),
+          fill: isArea,
+          tension: 0.42,
+          pointRadius: isBar ? undefined : 4,
+          pointBackgroundColor: '#5b8def',
+          pointHoverRadius: 7,
+          borderWidth: isBar ? undefined : 2.5,
+          borderRadius: isBar ? 6 : undefined,
+          yAxisID: 'y',
+          order: 1,
+        },
+        {
+          label: 'Orders 2026',
+          data: d.orders,
+          borderColor: '#34d399',
+          backgroundColor: isBar ? 'rgba(52,211,153,0.55)' : (isArea ? gradGreen : 'transparent'),
+          fill: isArea,
+          tension: 0.42,
+          pointRadius: isBar ? undefined : 3,
+          pointBackgroundColor: '#34d399',
+          pointHoverRadius: 6,
+          borderWidth: isBar ? undefined : 1.8,
+          borderDash: isBar ? undefined : [6, 4],
+          borderRadius: isBar ? 6 : undefined,
+          yAxisID: 'y1',
+          order: 2,
+        },
+      ];
+
+      if (comparing) {
+        datasets.push({
+          label: 'Revenue 2025',
+          data: d.prior,
+          borderColor: 'rgba(91,141,239,0.38)',
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.42,
+          pointRadius: 2,
+          pointBackgroundColor: 'rgba(91,141,239,0.4)',
+          borderWidth: 1.5,
+          borderDash: [5, 5],
+          yAxisID: 'y',
+          order: 3,
+        });
+        document.getElementById('legPrior').style.display = 'flex';
+      } else {
+        document.getElementById('legPrior').style.display = 'none';
+      }
+
+      if (mainChartInst) mainChartInst.destroy();
+      mainChartInst = new Chart(ctx, {
+        type,
+        data: { labels: d.labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          animation: { duration: 600, easing: 'easeInOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(9,12,24,0.96)',
+              borderColor: 'rgba(91,141,239,0.2)',
+              borderWidth: 1,
+              titleColor: '#dde4f4',
+              bodyColor: '#5a6278',
+              padding: 14,
+              cornerRadius: 10,
+              callbacks: {
+                label: c => {
+                  if (c.datasetIndex === 0 || c.datasetIndex === 2)
+                    return ` ${c.dataset.label}: $${c.parsed.y.toLocaleString()}`;
+                  return ` ${c.dataset.label}: ${c.parsed.y.toLocaleString()} orders`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              border: { display: false },
+              ticks: { color: '#5a6278', font: { size: 11, family: "'DM Sans'" }, maxTicksLimit: 12 }
+            },
+            y: {
+              position: 'left',
+              border: { display: false },
+              grid: { color: 'rgba(255,255,255,0.035)' },
+              ticks: {
+                color: '#5a6278', font: { size: 11 },
+                callback: v => '$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v)
+              }
+            },
+            y1: {
+              position: 'right',
+              border: { display: false },
+              grid: { display: false },
+              ticks: { color: '#5a6278', font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    /* ════════════════ VOLUME CHART ════════════════ */
+    function buildVolumeChart() {
+      const d = DATA[granularity];
+      const ctx = document.getElementById('volumeChart').getContext('2d');
+
+      const colors = d.orders.map(v => {
+        const max = Math.max(...d.orders);
+        return v === max ? 'rgba(52,211,153,0.85)' : 'rgba(91,141,239,0.5)';
+      });
+
+      if (volumeChartInst) volumeChartInst.destroy();
+      volumeChartInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: d.labels,
+          datasets: [{
+            label: 'Orders',
+            data: d.orders,
+            backgroundColor: colors,
+            borderRadius: 5,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 500 },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(9,12,24,0.96)',
+              borderColor: 'rgba(91,141,239,0.2)',
+              borderWidth: 1,
+              titleColor: '#dde4f4',
+              bodyColor: '#5a6278',
+              padding: 10, cornerRadius: 8,
+              callbacks: { label: c => ` ${c.parsed.y.toLocaleString()} orders` }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#5a6278', font: { size: 10 }, maxTicksLimit: 10 } },
+            y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#5a6278', font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    /* ════════════════ HEATMAP ════════════════ */
+    function buildHeatmap() {
+      const grid = document.getElementById('heatmapGrid');
+      const months = Object.keys(HEATMAP_DATA);
+      grid.innerHTML = months.map(m => {
+        const weeks = HEATMAP_DATA[m];
+        const cells = weeks.map(intensity => {
+          const alpha = (intensity * 0.9 + 0.06).toFixed(2);
+          const revenue = Math.round(intensity * 20000 + 8000);
+          return `<div class="hm-cell" style="background:rgba(91,141,239,${alpha});" title="${m} · $${revenue.toLocaleString()}"></div>`;
+        }).join('');
+        return `<div class="hm-month"><div class="hm-label">${m}</div>${cells}</div>`;
+      }).join('');
+    }
+
+    /* ════════════════ YOY BARS ════════════════ */
+    function buildYOY() {
+      const max = Math.max(...YOY.map(d => Math.max(d.v25, d.v26)));
+      document.getElementById('yoyBars').innerHTML = YOY.map(d => {
+        const pct25 = Math.round(d.v25 / max * 100);
+        const pct26 = Math.round(d.v26 / max * 100);
+        const growth = (((d.v26 - d.v25) / d.v25) * 100).toFixed(1);
+        const gColor = parseFloat(growth) >= 0 ? 'var(--green)' : 'var(--red)';
+        return `
+      <div class="yoy-row">
+        <div class="yoy-label">${d.m}</div>
+        <div class="yoy-bars">
+          <div class="yoy-bar-wrap">
+            <div class="yoy-bar" style="width:${pct25}%;background:rgba(91,141,239,0.35);min-width:2px;"></div>
+            <span class="yoy-val" style="color:var(--text-sub);">$${(d.v25 / 1000).toFixed(0)}K <em style="font-size:10px;">2025</em></span>
+          </div>
+          <div class="yoy-bar-wrap">
+            <div class="yoy-bar" style="width:${pct26}%;background:var(--accent);min-width:2px;"></div>
+            <span class="yoy-val">$${(d.v26 / 1000).toFixed(0)}K <em style="font-size:10px;color:${gColor};">+${growth}%</em></span>
+          </div>
+        </div>
+      </div>`;
+      }).join('');
+    }
+
+    /* ════════════════ PEAK TABLE ════════════════ */
+    function buildPeakTable() {
+      document.getElementById('peakTable').innerHTML = PEAKS.map(p => {
+        const tagHtml = p.tag === 'best'
+          ? `<span class="peak-badge peak-best">▲ Peak</span>`
+          : p.tag === 'worst'
+            ? `<span class="peak-badge peak-worst">▼ Low</span>`
+            : `<span style="color:var(--text-dim);font-size:11px;">—</span>`;
+        return `
+      <tr>
+        <td style="font-weight:500;">${p.period}</td>
+        <td style="font-family:var(--font-head);font-weight:700;">${p.revenue}</td>
+        <td style="color:var(--text-sub);">${p.orders}</td>
+        <td style="color:var(--green);font-weight:600;">${p.delta}</td>
+        <td>${tagHtml}</td>
+      </tr>`;
+      }).join('');
+    }
+
+    /* ════════════════ CONTROLS ════════════════ */
+    function setGranularity(g, btn) {
+      granularity = g;
+      document.querySelectorAll('.gran-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const titles = {
+        daily: ['Daily Sales Trend — May 2026', 'Day-by-day revenue and order volume for the current month'],
+        monthly: ['Monthly Sales Trend — Jan to May 2026', 'Revenue and order volume over time · Toggle compare to see prior period overlay'],
+        yearly: ['Yearly Sales Trend — 2022 to 2026', 'Annual revenue and order totals across all recorded years'],
+      };
+      document.getElementById('mainChartTitle').textContent = titles[g][0];
+      document.getElementById('mainChartSub').textContent = titles[g][1];
+
+      buildMainChart();
+      buildVolumeChart();
+    }
+
+    function setChartType(type, btn) {
+      chartType = type;
+      document.querySelectorAll('.ct-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildMainChart();
+    }
+
+    function toggleCompare() {
+      comparing = document.getElementById('compareToggle').checked;
+      buildMainChart();
+    }
+
+    function applyDateFilter() {
+      // TODO: filter data by date range from backend — currently uses preset datasets
+      flashStat();
+    }
+
+    function setPreset(preset) {
+      const today = new Date();
+      const from = new Date();
+      const presets = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 };
+      from.setMonth(today.getMonth() - (presets[preset] || 6));
+      document.getElementById('dateFrom').value = from.toISOString().slice(0, 10);
+      document.getElementById('dateTo').value = today.toISOString().slice(0, 10);
+      flashStat();
+    }
+
+    function flashStat() {
+      /* Pulse effect on stat chips when filter changes */
+      document.querySelectorAll('.stat-chip').forEach((c, i) => {
+        setTimeout(() => {
+          c.style.transition = 'border-color 0.3s';
+          c.style.borderColor = 'rgba(91,141,239,0.4)';
+          setTimeout(() => { c.style.borderColor = ''; }, 400);
+        }, i * 60);
+      });
+    }
+
+    function exportChart() {
+      /* TODO: connect to backend or use html2canvas for PDF export */
+      const a = document.createElement('a');
+      a.href = document.getElementById('mainChart').toDataURL('image/png');
+      a.download = `salesiq_trend_${granularity}_${new Date().toISOString().slice(0, 10)}.png`;
+      a.click();
+    }
+
+    function refreshData() {
+      /* TODO: replace with real API call GET /api/sales/trends?granularity=monthly */
+      const btn = document.querySelector('.btn-primary');
+      btn.style.opacity = '0.6';
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 0.8s linear infinite;width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refreshing…`;
+      document.head.insertAdjacentHTML('beforeend', '<style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>');
+      setTimeout(() => {
+        btn.style.opacity = '1';
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Refresh`;
+        flashStat();
+      }, 1200);
+    }
+
+    /* ════════════════ INIT ════════════════ */
+    buildMainChart();
+    buildVolumeChart();
+    buildHeatmap();
+    buildYOY();
+    buildPeakTable();
+
+    /* Live pulse animation for dot */
+    document.head.insertAdjacentHTML('beforeend', `<style>@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,0.5)}70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}</style>`);
+  </script>
+</body>
+
+</html>
