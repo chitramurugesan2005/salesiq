@@ -1189,7 +1189,7 @@
 
         <!-- Report type cards -->
         <div class="report-types" id="reportTypes">
-          <div class="rtype-card selected" onclick="selectReport(this,'full')">
+          <div class="rtype-card selected" data-type="full" onclick="selectReport(this,'full')">
             <div class="check-mark">✓</div>
             <div class="rtype-icon" style="background:rgba(14,165,233,0.12);">📊</div>
             <div class="rtype-name">Full Dashboard Report</div>
@@ -1202,7 +1202,7 @@
                 Forecast</span>
             </div>
           </div>
-          <div class="rtype-card" onclick="selectReport(this,'sales')">
+          <div class="rtype-card" data-type="sales" onclick="selectReport(this,'sales')">
             <div class="check-mark">✓</div>
             <div class="rtype-icon" style="background:rgba(34,197,94,0.12);">💹</div>
             <div class="rtype-name">Sales Performance Report</div>
@@ -1214,7 +1214,7 @@
               <span class="rtype-tag">Categories</span><span class="rtype-tag">YoY</span>
             </div>
           </div>
-          <div class="rtype-card" onclick="selectReport(this,'customer')">
+          <div class="rtype-card" data-type="customer" onclick="selectReport(this,'customer')">
             <div class="check-mark">✓</div>
             <div class="rtype-icon" style="background:rgba(139,92,246,0.12);">👥</div>
             <div class="rtype-name">Customer Analytics Report</div>
@@ -1358,23 +1358,23 @@
                   </div>
                 </div>
                 <div class="prev-kpi-row">
-                  <div class="prev-kpi">
-                    <div class="prev-kpi-val">$84K</div>
-                    <div class="prev-kpi-lbl">Revenue</div>
-                  </div>
-                  <div class="prev-kpi">
-                    <div class="prev-kpi-val">2,148</div>
-                    <div class="prev-kpi-lbl">Orders</div>
-                  </div>
-                  <div class="prev-kpi">
-                    <div class="prev-kpi-val">34.2%</div>
-                    <div class="prev-kpi-lbl">Margin</div>
-                  </div>
-                  <div class="prev-kpi">
-                    <div class="prev-kpi-val">+18.7%</div>
-                    <div class="prev-kpi-lbl">Growth</div>
-                  </div>
-                </div>
+  <div class="prev-kpi">
+    <div class="prev-kpi-val" id="prevRevenue">$84K</div>
+    <div class="prev-kpi-lbl">Revenue</div>
+  </div>
+  <div class="prev-kpi">
+    <div class="prev-kpi-val" id="prevOrders">—</div>
+    <div class="prev-kpi-lbl">Orders</div>
+  </div>
+  <div class="prev-kpi">
+    <div class="prev-kpi-val" id="prevChange">—</div>
+    <div class="prev-kpi-lbl">Rev Change</div>
+  </div>
+  <div class="prev-kpi">
+    <div class="prev-kpi-val" id="prevOrdChange">—</div>
+    <div class="prev-kpi-lbl">Ord Change</div>
+  </div>
+</div>
                 <div class="prev-chart-mock">
                   <div class="prev-bar" style="height:35%;background:#0ea5e9;"></div>
                   <div class="prev-bar" style="height:40%;background:#0ea5e9;"></div>
@@ -1523,30 +1523,63 @@
     }
 
     let exporting = false;
-    function exportReport(format) {
+
+function exportReport(format) {
     if (exporting) return;
     exporting = true;
 
-    const title      = document.getElementById('reportTitle').value || 'SalesIQ Report';
-    const preparedBy = document.getElementById('preparedBy').value || 'Admin';
-    const dateRange  = document.getElementById('dateRange').value;
+    const title       = document.getElementById('reportTitle').value || 'SalesIQ Report';
+    const preparedBy  = document.getElementById('preparedBy').value || 'Admin';
+    const dateRange   = document.getElementById('dateRange').value;
 
-    // Map date range selection to period
+    // Map date range to period
     let period = 'quarter';
     if (dateRange.includes('Month'))   period = 'month';
     if (dateRange.includes('Quarter')) period = 'quarter';
     if (dateRange.includes('6 Month')) period = 'month';
     if (dateRange.includes('Year'))    period = 'year';
 
+    // Get selected report type
+    let report_type = 'full';
+    const selectedCard = document.querySelector('.rtype-card.selected');
+    if (selectedCard) {
+        const cardTitle = selectedCard
+            .querySelector('.rtype-name')
+            .textContent.trim().toLowerCase();
+        if (cardTitle.includes('sales'))    report_type = 'sales';
+        if (cardTitle.includes('customer')) report_type = 'customer';
+        if (cardTitle.includes('full'))     report_type = 'full';
+    }
+
+    // Get checked modules
+    const checkedModules = [];
+    document.querySelectorAll('.module-checks label').forEach(label => {
+        const cb        = label.querySelector('input[type="checkbox"]');
+        const labelText = label.querySelector('.mod-check-label')
+                              .textContent.trim();
+        if (cb && cb.checked) {
+            if (labelText.includes('Sales Data'))  checkedModules.push('sales');
+            if (labelText.includes('Trends'))      checkedModules.push('trends');
+            if (labelText.includes('Products'))    checkedModules.push('products');
+            if (labelText.includes('Customers'))   checkedModules.push('customers');
+            if (labelText.includes('Regional'))    checkedModules.push('regional');
+            if (labelText.includes('Forecast'))    checkedModules.push('forecasting');
+            if (labelText.includes('Segment'))     checkedModules.push('segmentation');
+            if (labelText.includes('Executive'))   checkedModules.push('executive');
+            if (labelText.includes('Raw'))         checkedModules.push('raw');
+            if (labelText.includes('Appendix'))    checkedModules.push('appendix');
+        }
+    });
+
     const wrap  = document.getElementById('progressWrap');
     const fill  = document.getElementById('progressFill');
     const label = document.getElementById('progressLabel');
     const pct   = document.getElementById('progressPct');
 
-    const colors = { 
-        pdf   : '#ef4444', 
-        excel : '#16a34a', 
-        csv   : '#0ea5e9' 
+    const colors = {
+        pdf   : '#ef4444',
+        excel : '#16a34a',
+        csv   : '#0ea5e9'
     };
 
     wrap.classList.add('show');
@@ -1566,7 +1599,9 @@
     const params = new URLSearchParams({
         period      : period,
         title       : title,
-        prepared_by : preparedBy
+        prepared_by : preparedBy,
+        report_type : report_type,
+        modules     : checkedModules.join(',')
     });
 
     let url      = '';
@@ -1575,19 +1610,19 @@
 
     if (format === 'pdf') {
         url      = `http://127.0.0.1:5000/api/reports/pdf?${params}`;
-        filename = 'salesiq_report.pdf';
+        filename = `salesiq_${report_type}_report.pdf`;
         mimetype = 'application/pdf';
     } else if (format === 'excel') {
         url      = `http://127.0.0.1:5000/api/reports/excel?${params}`;
-        filename = 'salesiq_report.xlsx';
+        filename = `salesiq_${report_type}_report.xlsx`;
         mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     } else {
         url      = `http://127.0.0.1:5000/api/reports/csv?${params}`;
-        filename = 'salesiq_report.csv';
+        filename = `salesiq_${report_type}_report.csv`;
         mimetype = 'text/csv';
     }
 
-    // ── KEY FIX: use blob to download binary files correctly ──
+    // Fetch as blob for correct binary download
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -1598,7 +1633,6 @@
         .then(blob => {
             clearInterval(iv);
 
-            // Create blob URL and trigger download
             const blobUrl = window.URL.createObjectURL(
                 new Blob([blob], { type: mimetype })
             );
@@ -1610,7 +1644,6 @@
             document.body.removeChild(a);
             window.URL.revokeObjectURL(blobUrl);
 
-            // Update progress to complete
             fill.style.width  = '100%';
             pct.textContent   = '100%';
             label.textContent = '✓ Report ready!';
@@ -1619,7 +1652,9 @@
                 wrap.classList.remove('show');
                 fill.style.width = '0%';
                 exporting = false;
-                toast('success', `${format.toUpperCase()} report downloaded successfully!`);
+                toast('success',
+                    `${format.toUpperCase()} report downloaded successfully!`
+                );
             }, 800);
         })
         .catch(err => {
@@ -1646,7 +1681,32 @@
       wrap.appendChild(el);
       setTimeout(() => el.remove(), 3500);
     }
+    // Load real KPIs into preview
+async function loadPreviewKPIs() {
+  try {
+    const res  = await fetch('http://127.0.0.1:5000/api/dashboard/kpis?period=30d');
+    const data = await res.json();
 
+    document.getElementById('prevRevenue').textContent =
+      '$' + Math.round(data.revenue / 1000) + 'K';
+    document.getElementById('prevOrders').textContent =
+      data.orders.toLocaleString();
+    document.getElementById('prevChange').textContent =
+      (data.revenue_change >= 0 ? '+' : '') + data.revenue_change + '%';
+    document.getElementById('prevOrdChange').textContent =
+      (data.orders_change >= 0 ? '+' : '') + data.orders_change + '%';
+
+    // Update last generated time
+    document.querySelector('.topbar-right span strong').textContent =
+      new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+  } catch (err) {
+    console.error('Preview KPI load error:', err);
+  }
+}
+
+loadPreviewKPIs();
+buildHistory();
     buildHistory();
   </script>
 </body>

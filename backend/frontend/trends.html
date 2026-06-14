@@ -706,15 +706,16 @@
 
     /* ── Heatmap ── */
     .heatmap-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 4px;
-    }
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+}
 
     .hm-month {
       display: flex;
       flex-direction: column;
       gap: 3px;
+      min-width: 36px;
     }
 
     .hm-label {
@@ -1609,19 +1610,20 @@
     }
 
     /* ════════════════ HEATMAP ════════════════ */
-    function buildHeatmap() {
-      const grid = document.getElementById('heatmapGrid');
-      const months = Object.keys(HEATMAP_DATA);
-      grid.innerHTML = months.map(m => {
-        const weeks = HEATMAP_DATA[m];
-        const cells = weeks.map(intensity => {
-          const alpha = (intensity * 0.9 + 0.06).toFixed(2);
-          const revenue = Math.round(intensity * 20000 + 8000);
-          return `<div class="hm-cell" style="background:rgba(91,141,239,${alpha});" title="${m} · $${revenue.toLocaleString()}"></div>`;
-        }).join('');
-        return `<div class="hm-month"><div class="hm-label">${m}</div>${cells}</div>`;
-      }).join('');
-    }
+    /* ════════════════ HEATMAP ════════════════ */
+function buildHeatmap() {
+  const grid = document.getElementById('heatmapGrid');
+  const months = Object.keys(HEATMAP_DATA);
+  grid.innerHTML = months.map(m => {
+    const weeks = HEATMAP_DATA[m];
+    const cells = weeks.map(intensity => {
+      const alpha = (intensity * 0.9 + 0.06).toFixed(2);
+      const revenue = Math.round(intensity * 20000 + 8000);
+      return `<div class="hm-cell" style="background:rgba(91,141,239,${alpha});" title="${m} · $${revenue.toLocaleString()}"></div>`;
+    }).join('');
+    return `<div class="hm-month"><div class="hm-label">${m}</div>${cells}</div>`;
+  }).join('');
+}
 
     /* ════════════════ YOY BARS ════════════════ */
     function buildYOY() {
@@ -1744,12 +1746,149 @@
       }, 1200);
     }
 
-    /* ════════════════ INIT ════════════════ */
+    /* ════════════════ FETCH REAL DATA ════════════════ */
+async function loadTrendData(granularity_param) {
+  try {
+    const periodMap = { daily: '30d', monthly: '1y', yearly: '1y' };
+    const res = await fetch(`http://127.0.0.1:5000/api/dashboard/trend?period=${periodMap[granularity_param] || '1y'}`);
+    const raw = await res.json();
+
+    if (granularity_param === 'monthly') {
+      // Group daily data by month
+      const monthMap = {};
+      raw.labels.forEach((label, i) => {
+        const parts = label.split(' ');
+        const month = parts[1];
+        if (!monthMap[month]) monthMap[month] = { revenue: 0, orders: 0 };
+        monthMap[month].revenue += raw.revenue[i];
+        monthMap[month].orders += raw.orders[i];
+      });
+      DATA.monthly.labels  = Object.keys(monthMap);
+      DATA.monthly.revenue = Object.values(monthMap).map(v => v.revenue);
+      DATA.monthly.orders  = Object.values(monthMap).map(v => v.orders);
+
+      // Update stat chips
+      const totalRev = DATA.monthly.revenue.reduce((a, b) => a + b, 0);
+      const totalOrd = DATA.monthly.orders.reduce((a, b) => a + b, 0);
+      const maxRev   = Math.max(...DATA.monthly.revenue);
+      const maxMonth = DATA.monthly.labels[DATA.monthly.revenue.indexOf(maxRev)];
+      const avgRev   = totalRev / DATA.monthly.labels.length;
+
+      document.getElementById('stRevenue').textContent =
+        '$' + (totalRev / 1000).toFixed(1) + 'K';
+      document.getElementById('stOrders').textContent =
+        totalOrd.toLocaleString();
+      document.querySelector('.stat-chip:nth-child(3) .stat-chip-value').textContent =
+        maxMonth + ' \'26';
+      document.querySelector('.stat-chip:nth-child(3) .stat-chip-delta').textContent =
+        '$' + maxRev.toLocaleString() + ' peak';
+      document.querySelector('.stat-chip:nth-child(4) .stat-chip-value').textContent =
+        '$' + (avgRev / 1000).toFixed(1) + 'K';
+
+      // Update YOY with real data
+      YOY.length = 0;
+      DATA.monthly.labels.forEach((m, i) => {
+        YOY.push({
+          m      : m,
+          v25    : DATA.monthly.prior[i] || 0,
+          v26    : DATA.monthly.revenue[i]
+        });
+      });
+
+      // Update PEAKS with real data
+      const sorted = [...DATA.monthly.labels.map((m, i) => ({
+        period : m + ' \'26',
+        revenue: DATA.monthly.revenue[i],
+        orders : DATA.monthly.orders[i],
+      }))].sort((a, b) => b.revenue - a.revenue);
+
+      const avgForPeak = totalRev / DATA.monthly.labels.length;
+      PEAKS.length = 0;
+      sorted.forEach((p, i) => {
+        const delta = (((p.revenue - avgForPeak) / avgForPeak) * 100).toFixed(1);
+        PEAKS.push({
+          period : p.period,
+          revenue: '$' + p.revenue.toLocaleString(),
+          orders : p.orders.toLocaleString(),
+          delta  : (delta >= 0 ? '+' : '') + delta + '%',
+          tag    : i === 0 ? 'best' : i === sorted.length - 1 ? 'worst' : ''
+        });
+      });
+
+    } else if (granularity_param === 'daily') {
+      // Use last 30 data points for daily
+      const slice = 30;
+      DATA.daily.labels  = raw.labels.slice(-slice);
+      DATA.daily.revenue = raw.revenue.slice(-slice);
+      DATA.daily.orders  = raw.orders.slice(-slice);
+
+    } else {
+      // Yearly — group by year
+      const yearMap = {};
+      raw.labels.forEach((label, i) => {
+        const parts = label.split(' ');
+        const year  = parts[1] === 'Jan' || parseInt(parts[0]) <= 3
+          ? parts[1] : parts[1];
+        // Extract year from label — use a simple approach
+        const yr = label.includes('Oct') || label.includes('Nov') || label.includes('Dec')
+          ? '2025' : '2026';
+        if (!yearMap[yr]) yearMap[yr] = { revenue: 0, orders: 0 };
+        yearMap[yr].revenue += raw.revenue[i];
+        yearMap[yr].orders  += raw.orders[i];
+      });
+      DATA.yearly.labels  = Object.keys(yearMap);
+      DATA.yearly.revenue = Object.values(yearMap).map(v => Math.round(v.revenue));
+      DATA.yearly.orders  = Object.values(yearMap).map(v => v.orders);
+    }
+
     buildMainChart();
     buildVolumeChart();
     buildHeatmap();
     buildYOY();
     buildPeakTable();
+
+  } catch (err) {
+    console.error('Trend load error:', err);
+    buildMainChart();
+    buildVolumeChart();
+    buildHeatmap();
+    buildYOY();
+    buildPeakTable();
+  }
+}
+
+/* ── Update setGranularity to use real data ── */
+function setGranularity(g, btn) {
+  granularity = g;
+  document.querySelectorAll('.gran-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const titles = {
+    daily  : ['Daily Sales Trend', 'Day-by-day revenue and order volume'],
+    monthly: ['Monthly Sales Trend', 'Revenue and order volume grouped by month'],
+    yearly : ['Yearly Sales Trend', 'Annual revenue and order totals'],
+  };
+  document.getElementById('mainChartTitle').textContent = titles[g][0];
+  document.getElementById('mainChartSub').textContent   = titles[g][1];
+  loadTrendData(g);
+}
+
+/* ── Update refresh button ── */
+function refreshData() {
+  const btn = document.querySelector('.btn-primary');
+  btn.style.opacity = '0.6';
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 0.8s linear infinite;width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refreshing…`;
+  document.head.insertAdjacentHTML('beforeend', '<style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>');
+  loadTrendData(granularity).then(() => {
+    btn.style.opacity = '1';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Refresh`;
+    flashStat();
+  });
+}
+
+/* ════════════════ INIT ════════════════ */
+loadTrendData('monthly');
+
+document.head.insertAdjacentHTML('beforeend', `<style>@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,0.5)}70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}</style>`);
 
     /* Live pulse animation for dot */
     document.head.insertAdjacentHTML('beforeend', `<style>@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,0.5)}70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}</style>`);

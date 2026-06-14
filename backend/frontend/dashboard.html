@@ -1098,7 +1098,7 @@
           </svg>
           Forecasting
         </a>
-        <a class="nav-item" href="#">
+        <a class="nav-item" href="segmentation.html">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <circle cx="12" cy="12" r="3" />
             <path
@@ -1324,7 +1324,7 @@
               <div class="donut-wrap" style="height:180px;">
                 <canvas id="donutChart"></canvas>
                 <div class="donut-center">
-                  <div class="donut-center-value">$84K</div>
+                  <div class="donut-center-value" id="donutTotal">$27K</div>
                   <div class="donut-center-label">Total</div>
                 </div>
               </div>
@@ -1346,7 +1346,7 @@
                 <div class="card-title">Top Products</div>
                 <div class="card-sub">By revenue this period</div>
               </div>
-              <a href="#" style="font-size:11px;color:var(--accent);text-decoration:none;">View all →</a>
+              <a href="products.html" style="font-size:11px;color:var(--accent);text-decoration:none;">View all →</a>
             </div>
             <div class="card-body">
               <div class="prod-list" id="topProductsList"></div>
@@ -1377,47 +1377,47 @@
             </div>
             <div class="card-body">
               <div class="module-grid">
-                <a class="mod-tile" href="../module2-sales-data/sales-data.html">
+                <a class="mod-tile" href="sales-data.html">
                   <div class="mod-tile-icon">📋</div>
                   <div class="mod-tile-label">Sales Data</div>
                   <div class="mod-tile-sub">M2</div>
                 </a>
-                <a class="mod-tile" href="#">
+                <a class="mod-tile" href="trends.html">
                   <div class="mod-tile-icon">📈</div>
                   <div class="mod-tile-label">Trends</div>
                   <div class="mod-tile-sub">M4</div>
                 </a>
-                <a class="mod-tile" href="#">
+                <a class="mod-tile" href="products.html">
                   <div class="mod-tile-icon">🏆</div>
                   <div class="mod-tile-label">Products</div>
                   <div class="mod-tile-sub">M5</div>
                 </a>
-                <a class="mod-tile" href="#">
+                <a class="mod-tile" href="customers.html">
                   <div class="mod-tile-icon">👥</div>
                   <div class="mod-tile-label">Customers</div>
                   <div class="mod-tile-sub">M6</div>
                 </a>
-                <a class="mod-tile" href="#">
+                <a class="mod-tile" href="regional.html">
                   <div class="mod-tile-icon">🗺️</div>
                   <div class="mod-tile-label">Regional</div>
                   <div class="mod-tile-sub">M7</div>
                 </a>
-                <a class="mod-tile" href="#">
+                <a class="mod-tile" href="reports.html">
                   <div class="mod-tile-icon">📄</div>
                   <div class="mod-tile-label">Reports</div>
                   <div class="mod-tile-sub">M8</div>
                 </a>
-                <a class="mod-tile" href="#">
+                <a class="mod-tile" href="forecasting.html">
                   <div class="mod-tile-icon">🤖</div>
                   <div class="mod-tile-label">Forecast</div>
                   <div class="mod-tile-sub">M9 · AI</div>
                 </a>
-                <a class="mod-tile" href="#">
+                <a class="mod-tile" href="segmentation.html">
                   <div class="mod-tile-icon">🧠</div>
                   <div class="mod-tile-label">Segments</div>
                   <div class="mod-tile-sub">M10 · AI</div>
                 </a>
-                <a class="mod-tile" href="../module1-auth/login.html">
+                <a class="mod-tile" href="login.html">
                   <div class="mod-tile-icon">🔐</div>
                   <div class="mod-tile-label">Auth</div>
                   <div class="mod-tile-sub">M1</div>
@@ -1678,27 +1678,345 @@
     </div>
   </div>`).join('');
 
-    /* ── Period switcher ── */
-    function setPeriod(period, btn) {
-      currentPeriod = period;
-      document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      updateKPIs(period);
-      buildMainChart(period, mainChartType);
-    }
+   
 
-    /* ── Chart type toggle ── */
-    function setChartType(type, btn) {
-      mainChartType = type;
-      document.querySelectorAll('.ct-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      buildMainChart(currentPeriod, type);
-    }
+    
 
-    /* ── Init ── */
-    updateKPIs('30d');
-    buildMainChart('30d', 'line');
-    buildDonut();
+    /* ── Fetch real data from Flask API ── */
+async function loadDashboard(period) {
+    try {
+        // Fetch KPIs
+        const kpiRes = await fetch(
+            `http://127.0.0.1:5000/api/dashboard/kpis?period=${period}`
+        );
+        const kpiData = await kpiRes.json();
+
+        // Update KPI cards
+        document.getElementById('kpiRevenue').textContent =
+            '$' + Number(kpiData.revenue).toLocaleString();
+        document.getElementById('kpiOrders').textContent =
+            Number(kpiData.orders).toLocaleString();
+
+        // Update deltas
+        const revDelta = document.querySelector('.kpi-card.blue .kpi-delta');
+        if (revDelta) {
+            revDelta.className = 'kpi-delta ' +
+                (kpiData.revenue_change >= 0 ? 'up' : 'down');
+            revDelta.innerHTML = (kpiData.revenue_change >= 0 ? '▲' : '▼') +
+                ' ' + Math.abs(kpiData.revenue_change) + '%';
+        }
+
+        const ordDelta = document.querySelector('.kpi-card.green .kpi-delta');
+        if (ordDelta) {
+            ordDelta.className = 'kpi-delta ' +
+                (kpiData.orders_change >= 0 ? 'up' : 'down');
+            ordDelta.innerHTML = (kpiData.orders_change >= 0 ? '▲' : '▼') +
+                ' ' + Math.abs(kpiData.orders_change) + '%';
+        }
+
+        // Fetch trend data
+        const trendRes = await fetch(
+            `http://127.0.0.1:5000/api/dashboard/trend?period=${period}`
+        );
+        const trendData = await trendRes.json();
+
+        // Rebuild main chart with real data
+        buildMainChartReal(
+            trendData.labels,
+            trendData.revenue,
+            trendData.orders
+        );
+
+        // Fetch category data
+        const catRes = await fetch(
+            `http://127.0.0.1:5000/api/dashboard/categories?period=${period}`
+        );
+        const catData = await catRes.json();
+
+        // Rebuild donut with real data
+        buildDonutReal(catData.categories, catData.values);
+
+        // Fetch top products
+        const prodRes = await fetch(
+            `http://127.0.0.1:5000/api/dashboard/top-products?period=${period}`
+        );
+        const prodData = await prodRes.json();
+
+        // Update top products list
+        buildTopProducts(prodData);
+
+        // Fetch activity
+        const actRes = await fetch(
+            `http://127.0.0.1:5000/api/dashboard/activity`
+        );
+        const actData = await actRes.json();
+
+        // Update activity feed
+        buildActivity(actData);
+
+        // Update period label
+        const labels = {
+            '7d'  : 'this week',
+            '30d' : 'this month',
+            '90d' : 'last 3 months',
+            '1y'  : 'this year'
+        };
+        document.getElementById('periodLabel').textContent =
+            labels[period] || 'this month';
+
+    } catch (err) {
+        console.error('Dashboard load error:', err);
+    }
+}
+
+/* ── Build main chart with real data ── */
+function buildMainChartReal(labels, revenue, orders) {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const gradRev = ctx.createLinearGradient(0, 0, 0, 220);
+    gradRev.addColorStop(0, 'rgba(79,142,247,0.25)');
+    gradRev.addColorStop(1, 'rgba(79,142,247,0.01)');
+
+    if (mainChart) mainChart.destroy();
+    mainChart = new Chart(ctx, {
+        type: mainChartType,
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label          : 'Revenue ($)',
+                    data           : revenue,
+                    borderColor    : '#4f8ef7',
+                    backgroundColor: mainChartType === 'line'
+                        ? gradRev
+                        : 'rgba(79,142,247,0.6)',
+                    fill           : mainChartType === 'line',
+                    tension        : 0.4,
+                    pointRadius    : mainChartType === 'line' ? 0 : undefined,
+                    pointHoverRadius: 5,
+                    borderWidth    : mainChartType === 'line' ? 2 : undefined,
+                    borderRadius   : mainChartType === 'bar' ? 5 : undefined,
+                    yAxisID        : 'y',
+                },
+                {
+                    label          : 'Orders',
+                    data           : orders,
+                    borderColor    : '#3ecf8e',
+                    backgroundColor: mainChartType === 'line'
+                        ? 'transparent'
+                        : 'rgba(62,207,142,0.5)',
+                    fill           : false,
+                    tension        : 0.4,
+                    pointRadius    : mainChartType === 'line' ? 0 : undefined,
+                    pointHoverRadius: 5,
+                    borderWidth    : mainChartType === 'line' ? 1.5 : undefined,
+                    borderDash     : mainChartType === 'line' ? [5,4] : undefined,
+                    borderRadius   : mainChartType === 'bar' ? 5 : undefined,
+                    yAxisID        : 'y1',
+                }
+            ]
+        },
+        options: {
+            responsive        : true,
+            maintainAspectRatio: false,
+            interaction       : { mode: 'index', intersect: false },
+            plugins: {
+                legend : { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(11,14,24,0.95)',
+                    borderColor    : 'rgba(255,255,255,0.1)',
+                    borderWidth    : 1,
+                    titleColor     : '#dde3f2',
+                    bodyColor      : '#5e6880',
+                    padding        : 12,
+                    cornerRadius   : 8,
+                    callbacks      : {
+                        label: c => c.datasetIndex === 0
+                            ? ` $${c.parsed.y.toLocaleString()} revenue`
+                            : ` ${c.parsed.y} orders`
+                    }
+                }
+            },
+            scales: {
+                x : {
+                    grid  : { display: false },
+                    border: { display: false },
+                    ticks : {
+                        color        : '#5e6880',
+                        font         : { size: 11 },
+                        maxTicksLimit: 8
+                    }
+                },
+                y : {
+                    position: 'left',
+                    border  : { display: false },
+                    grid    : { color: 'rgba(255,255,255,0.04)' },
+                    ticks   : {
+                        color   : '#5e6880',
+                        font    : { size: 11 },
+                        callback: v => '$' + (v >= 1000
+                            ? (v/1000).toFixed(0) + 'k'
+                            : v)
+                    }
+                },
+                y1: {
+                    position: 'right',
+                    border  : { display: false },
+                    grid    : { display: false },
+                    ticks   : { color: '#5e6880', font: { size: 11 } }
+                }
+            }
+        }
+    });
+}
+
+/* ── Build donut with real data ── */
+function buildDonutReal(categories, values) {
+    const CAT_COLORS = [
+        '#4f8ef7','#3ecf8e','#f0a04b',
+        '#f06070','#a78bfa','#22d3ee'
+    ];
+    const ctx = document.getElementById('donutChart').getContext('2d');
+    if (donutChart) donutChart.destroy();
+    donutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels  : categories,
+            datasets: [{
+                data           : values,
+                backgroundColor: CAT_COLORS,
+                borderWidth    : 0,
+                hoverOffset    : 8
+            }]
+        },
+        options: {
+            responsive        : true,
+            maintainAspectRatio: false,
+            cutout            : '72%',
+            plugins: {
+                legend : { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(11,14,24,0.95)',
+                    borderColor    : 'rgba(255,255,255,0.1)',
+                    borderWidth    : 1,
+                    titleColor     : '#dde3f2',
+                    bodyColor      : '#5e6880',
+                    padding        : 10,
+                    cornerRadius   : 8,
+                    callbacks      : {
+                        label: c => ` ${c.label}: $${c.parsed.toLocaleString()}`
+                    }
+                }
+            }
+        }
+    });
+    const total = values.reduce((a, b) => a + b, 0);
+const el = document.getElementById('donutTotal');
+if (el) el.textContent = '$' + (total / 1000).toFixed(0) + 'K';
+    // Update donut legend
+    document.getElementById('donutLegend').innerHTML =
+        categories.map((n, i) => `
+        <div style="display:flex;align-items:center;
+            justify-content:space-between;
+            padding:3px 0;font-size:11px;">
+            <div style="display:flex;align-items:center;gap:7px;">
+                <div style="width:8px;height:8px;border-radius:2px;
+                    background:${CAT_COLORS[i]};flex-shrink:0;"></div>
+                <span style="color:var(--text-sub);">${n}</span>
+            </div>
+            <span style="font-weight:600;color:var(--text);">
+                $${Number(values[i]).toLocaleString()}
+            </span>
+        </div>`).join('');
+}
+
+/* ── Build top products with real data ── */
+function buildTopProducts(products) {
+    const BAR_COLORS = [
+        '#f0a04b','#a78bfa','#4f8ef7','#3ecf8e','#f06070'
+    ];
+    const RANKS = ['gold','silver','bronze','',''];
+
+    document.getElementById('topProductsList').innerHTML =
+        products.map((p, i) => `
+        <div class="prod-item">
+            <div class="prod-rank ${RANKS[i]}">${i+1}</div>
+            <div class="prod-info">
+                <div class="prod-name-t">${p.name}</div>
+                <div class="prod-cat-t">${p.category}</div>
+            </div>
+            <div class="prod-bar-wrap">
+                <div class="prod-bar">
+                    <div class="prod-bar-fill"
+                        style="width:${p.pct}%;
+                        background:${BAR_COLORS[i]};">
+                    </div>
+                </div>
+            </div>
+            <div class="prod-rev">
+                $${Number(p.revenue).toLocaleString()}
+            </div>
+        </div>`).join('');
+}
+
+/* ── Build activity feed with real data ── */
+function buildActivity(activities) {
+    const icons = {
+        'Completed' : '✓',
+        'Pending'   : '↑',
+        'Refunded'  : '↩'
+    };
+    const colors = {
+        'Completed' : 'var(--green-g)',
+        'Pending'   : 'var(--accent-g)',
+        'Refunded'  : 'var(--red-g)'
+    };
+
+    document.getElementById('activityList').innerHTML =
+        activities.map(a => `
+        <div class="act-item">
+            <div class="act-icon"
+                style="background:${colors[a.status] || 'var(--accent-g)'};
+                color:var(--accent);
+                font-size:14px;font-weight:700;">
+                ${icons[a.status] || '•'}
+            </div>
+            <div class="act-body">
+                <div class="act-text">
+                    <strong>${a.product}</strong>
+                    — ${a.units} units ·
+                    $${Number(a.revenue).toLocaleString()}
+                </div>
+                <div class="act-time">${a.date} · ${a.region}</div>
+            </div>
+        </div>`).join('');
+}
+
+/* ── Period switcher updated ── */
+function setPeriod(period, btn) {
+    currentPeriod = period;
+    document.querySelectorAll('.period-tab').forEach(
+        b => b.classList.remove('active')
+    );
+    btn.classList.add('active');
+    loadDashboard(period);
+}
+
+/* ── Chart type toggle updated ── */
+function setChartType(type, btn) {
+    mainChartType = type;
+    document.querySelectorAll('.ct-btn').forEach(
+        b => b.classList.remove('active')
+    );
+    btn.classList.add('active');
+    loadDashboard(currentPeriod);
+}
+/* INIT */
+/* ── INIT ── */
+buildDonut();
+buildMainChart('30d', 'line');
+loadDashboard('30d');
+
+
   </script>
 
   <!-- Phase 4: Auth Guard — checks session and fills user info -->

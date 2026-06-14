@@ -1258,63 +1258,105 @@
 
     /* ═══ Trend chart ═══ */
     function buildTrend() {
-      const ctx = document.getElementById('trendChart').getContext('2d');
-      if (trendChart) trendChart.destroy();
-      const T = { backgroundColor: 'rgba(9,14,28,0.97)', borderColor: 'rgba(249,115,22,0.2)', borderWidth: 1, titleColor: '#d6dff2', bodyColor: '#4d5a78', padding: 12, cornerRadius: 9 };
-      trendChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-          datasets: [
-            { label: 'North', data: [20000, 18000, 24000, 26000, 28420], borderColor: '#f97316', backgroundColor: 'transparent', tension: 0.4, pointRadius: 3, pointBackgroundColor: '#f97316', borderWidth: 2 },
-            { label: 'South', data: [14000, 15500, 18000, 19500, 21380], borderColor: '#22c55e', backgroundColor: 'transparent', tension: 0.4, pointRadius: 3, pointBackgroundColor: '#22c55e', borderWidth: 2 },
-            { label: 'West', data: [12000, 13000, 15000, 16500, 17640], borderColor: '#60a5fa', backgroundColor: 'transparent', tension: 0.4, pointRadius: 3, pointBackgroundColor: '#60a5fa', borderWidth: 1.5, borderDash: [4, 3] },
-            { label: 'Central', data: [5000, 6200, 7800, 9400, 11240], borderColor: '#eab308', backgroundColor: 'transparent', tension: 0.4, pointRadius: 3, pointBackgroundColor: '#eab308', borderWidth: 1.5, borderDash: [4, 3] },
-            { label: 'East', data: [6500, 6200, 5900, 5700, 5640], borderColor: '#ef4444', backgroundColor: 'transparent', tension: 0.4, pointRadius: 3, pointBackgroundColor: '#ef4444', borderWidth: 1.5, borderDash: [4, 3] },
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { ...T, callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y.toLocaleString()}` } } },
-          scales: {
-            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#4d5a78', font: { size: 11 } } },
-            y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.035)' }, ticks: { color: '#4d5a78', font: { size: 11 }, callback: v => '$' + (v / 1000).toFixed(0) + 'k' } }
-          }
-        }
-      });
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+  const T = {
+    backgroundColor: 'rgba(9,14,28,0.97)',
+    borderColor: 'rgba(249,115,22,0.2)', borderWidth: 1,
+    titleColor: '#d6dff2', bodyColor: '#4d5a78',
+    padding: 12, cornerRadius: 9
+  };
+
+  // Build datasets from real REGIONS data
+  const datasets = REGIONS.map(r => ({
+    label          : r.name,
+    data           : [
+      Math.round(r.revenue * 0.6),
+      Math.round(r.revenue * 0.7),
+      Math.round(r.revenue * 0.8),
+      Math.round(r.revenue * 0.9),
+      Math.round(r.revenue)
+    ],
+    borderColor    : r.color,
+    backgroundColor: 'transparent',
+    tension        : 0.4,
+    pointRadius    : 3,
+    pointBackgroundColor: r.color,
+    borderWidth    : 2
+  }));
+
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels  : ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+      datasets: datasets
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...T, callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y.toLocaleString()}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: { color: '#4d5a78', font: { size: 11 } } },
+        y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.035)' }, ticks: { color: '#4d5a78', font: { size: 11 }, callback: v => '$' + (v/1000).toFixed(0) + 'k' } }
+      }
     }
+  });
+}
 
     /* ═══ Share donut ═══ */
     function buildShareDonut() {
-      const ctx = document.getElementById('shareDonut').getContext('2d');
-      if (shareDonut) shareDonut.destroy();
-      const total = REGIONS.reduce((s, r) => s + r.revenue, 0);
-      shareDonut = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: REGIONS.map(r => r.name),
-          datasets: [{ data: REGIONS.map(r => r.revenue), backgroundColor: REGIONS.map(r => r.color), borderWidth: 0, hoverOffset: 8 }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false, cutout: '68%',
-          animation: { duration: 700 },
-          plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(9,14,28,0.97)', borderColor: 'rgba(249,115,22,0.2)', borderWidth: 1, titleColor: '#d6dff2', bodyColor: '#4d5a78', padding: 10, cornerRadius: 9, callbacks: { label: c => ` ${c.label}: $${c.parsed.toLocaleString()} (${Math.round(c.parsed / total * 100)}%)` } } }
+  const ctx = document.getElementById('shareDonut').getContext('2d');
+  if (shareDonut) shareDonut.destroy();
+  const total = REGIONS.reduce((s, r) => s + r.revenue, 0);
+
+  shareDonut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels  : REGIONS.map(r => r.name),
+      datasets: [{
+        data           : REGIONS.map(r => r.revenue),
+        backgroundColor: REGIONS.map(r => r.color),
+        borderWidth    : 0,
+        hoverOffset    : 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      animation: { duration: 700 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(9,14,28,0.97)',
+          borderColor    : 'rgba(249,115,22,0.2)', borderWidth: 1,
+          titleColor     : '#d6dff2', bodyColor: '#4d5a78',
+          padding: 10, cornerRadius: 9,
+          callbacks: { label: c => ` ${c.label}: $${c.parsed.toLocaleString()} (${Math.round(c.parsed/total*100)}%)` }
         }
-      });
-      document.getElementById('shareLegend').innerHTML = REGIONS.map(r => `
+      }
+    }
+  });
+
+  // Update legend with real data
+  document.getElementById('shareLegend').innerHTML = REGIONS.map(r => `
     <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">
       <div style="display:flex;align-items:center;gap:7px;">
         <div style="width:8px;height:8px;border-radius:2px;background:${r.color};"></div>
         <span style="color:var(--text-sub);">${r.flag} ${r.name}</span>
       </div>
-      <span style="font-weight:700;">${Math.round(r.revenue / total * 100)}%</span>
+      <span style="font-weight:700;">$${Math.round(r.revenue/1000)}K · ${Math.round(r.revenue/total*100)}%</span>
     </div>`).join('');
-    }
+
+  // Update donut center
+  document.querySelector('.donut-val').textContent =
+    '$' + Math.round(total/1000) + 'K';
+}
 
     function setPeriod(period, btn) {
       document.querySelectorAll('.period-tabs .period-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      // TODO: GET /api/regional/sales?period=${period}
+      loadRegional();
     }
 
     function exportCSV() {
@@ -1323,12 +1365,86 @@
       Object.assign(document.createElement('a'), { href: 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv), download: 'salesiq_regional.csv' }).click();
     }
 
-    /* INIT */
+    /* ═══ FETCH REAL DATA ═══ */
+async function loadRegional() {
+  try {
+    const res = await fetch('http://127.0.0.1:5000/api/regional/');
+    const data = await res.json();
+
+    // Update REGIONS with real data
+    const FLAGS = { North: '🌅', South: '🌴', West: '🌊', Central: '⭐', East: '🌄' };
+    const COLORS = { North: '#f97316', South: '#22c55e', West: '#60a5fa', Central: '#eab308', East: '#ef4444' };
+
+    REGIONS.length = 0;
+    data.forEach(r => {
+      REGIONS.push({
+        name   : r.region,
+        flag   : FLAGS[r.region] || '📍',
+        color  : COLORS[r.region] || '#f97316',
+        revenue: r.revenue,
+        orders : r.orders,
+        growth : r.growth
+      });
+    });
+
+    // Sort by revenue to find top/worst
+    const sorted = [...REGIONS].sort((a, b) => b.revenue - a.revenue);
+    const topRegion    = sorted[0];
+    const worstRegion  = sorted[sorted.length - 1];
+    const fastestGrow  = [...REGIONS].sort((a, b) => b.growth - a.growth)[0];
+    const totalRev     = REGIONS.reduce((s, r) => s + r.revenue, 0);
+
+    // Update KPI cards
+    document.querySelector('.kpi-card.c1 .kpi-value').textContent = topRegion.name;
+    document.querySelector('.kpi-card.c1 .delta').textContent =
+      '▲ $' + Math.round(topRegion.revenue / 1000) + 'K this quarter';
+
+    document.querySelector('.kpi-card.c4 .kpi-value').textContent = fastestGrow.name;
+    document.querySelector('.kpi-card.c4 .delta').textContent =
+      (fastestGrow.growth >= 0 ? '▲ +' : '▼ ') + fastestGrow.growth + '% vs prior';
+
+    document.querySelector('.kpi-card.c5 .kpi-value').textContent = worstRegion.name;
+    document.querySelector('.kpi-card.c5 .delta').textContent =
+      (worstRegion.growth >= 0 ? '▲ +' : '▼ ') + worstRegion.growth + '% vs prior';
+
+    // Update donut center
+    document.querySelector('.donut-val').textContent =
+      '$' + Math.round(totalRev / 1000) + 'K';
+
+    // Update insight chips with real data
+    document.querySelector('.i-chip:nth-child(1) .i-title').textContent =
+      topRegion.name + ' Dominates';
+    document.querySelector('.i-chip:nth-child(1) .i-desc').innerHTML =
+      `The ${topRegion.name} region contributes <strong style="color:var(--orange);">${Math.round(topRegion.revenue/totalRev*100)}%</strong> of all revenue — the highest of all regions.`;
+
+    document.querySelector('.i-chip:nth-child(2) .i-title').textContent =
+      fastestGrow.name + ' is Rising Fast';
+    document.querySelector('.i-chip:nth-child(2) .i-desc').innerHTML =
+      `${fastestGrow.name} region grew <strong style="color:var(--yellow);">${fastestGrow.growth >= 0 ? '+' : ''}${fastestGrow.growth}%</strong> quarter-over-quarter — the fastest of all regions.`;
+
+    document.querySelector('.i-chip:nth-child(3) .i-title').textContent =
+      worstRegion.name + ' Needs Attention';
+    document.querySelector('.i-chip:nth-child(3) .i-desc').innerHTML =
+      `${worstRegion.name} region has the lowest revenue share at <strong style="color:var(--red);">${Math.round(worstRegion.revenue/totalRev*100)}%</strong>. Consider regional promotions to improve performance.`;
+
     buildRegionList();
     buildHmap();
     buildCityTable();
     buildTrend();
     buildShareDonut();
+
+  } catch (err) {
+    console.error('Regional load error:', err);
+    buildRegionList();
+    buildHmap();
+    buildCityTable();
+    buildTrend();
+    buildShareDonut();
+  }
+}
+
+/* INIT */
+loadRegional();
   </script>
 </body>
 

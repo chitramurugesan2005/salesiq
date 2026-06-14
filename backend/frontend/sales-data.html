@@ -19,7 +19,7 @@
     }
 
     :root {
-      --bg: #07090e;
+      --bg: #060a16;
       --bg2: #0c0f17;
       --bg3: #111521;
       --bg4: #181d2b;
@@ -1979,9 +1979,17 @@
 
     /* ── Helpers ── */
     function formatDate(d) {
-      const dt = new Date(d + 'T00:00:00');
-      return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    }
+  if (!d) return '—';
+  // Handle both YYYY-MM-DD and other formats
+  const parts = d.split('T')[0].split('-');
+  if (parts.length !== 3) return d;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun',
+                  'Jul','Aug','Sep','Oct','Nov','Dec'];
+  const day   = parts[2];
+  const month = months[parseInt(parts[1]) - 1];
+  const year  = parts[0];
+  return `${day} ${month} ${year}`;
+}
 
     /* ── Toast ── */
     function toast(type, msg) {
@@ -2135,8 +2143,100 @@
       if (f) handleFileSelect({ target: { files: [f] } });
     });
 
-    /* ── Init ── */
+    /* ── Load real data from Flask ── */
+async function loadSalesData() {
+  try {
+    const res = await fetch('http://127.0.0.1:5000/api/sales/');
+    const data = await res.json();
+
+    // Map API response to records format
+    records = data.map(s => ({
+      id       : s.id,
+      product  : s.product,
+      category : s.category,
+      date     : s.date,
+      region   : s.region,
+      units    : s.units,
+      price    : s.price || (s.revenue / s.units),
+      revenue  : s.revenue,
+      status   : s.status,
+      notes    : s.notes || ''
+    }));
+
+    nextId = Math.max(...records.map(r => r.id)) + 1;
     applyFilters();
+
+  } catch (err) {
+    console.error('Failed to load sales:', err);
+    // Fall back to hardcoded data
+    applyFilters();
+  }
+}
+
+/* ── Save record to Flask API ── */
+async function saveRecord() {
+  const product  = document.getElementById('f-product').value.trim();
+  const category = document.getElementById('f-category').value;
+  const date     = document.getElementById('f-date').value;
+  const region   = document.getElementById('f-region').value;
+  const units    = parseInt(document.getElementById('f-units').value);
+  const price    = parseFloat(document.getElementById('f-price').value);
+  const status   = document.getElementById('f-status').value;
+  const notes    = document.getElementById('f-notes').value.trim();
+
+  if (!product || !category || !date || !region || !units || !price) {
+    toast('error', 'Please fill in all required fields.'); return;
+  }
+
+  const revenue = parseFloat((units * price).toFixed(2));
+  const payload = { product, category, date, region, units,
+                    price, revenue, status, notes };
+
+  try {
+    if (editingId !== null) {
+      // Update existing
+      await fetch(`http://127.0.0.1:5000/api/sales/${editingId}`, {
+        method : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify(payload)
+      });
+      toast('success', `Record updated — ${product}`);
+    } else {
+      // Add new
+      await fetch('http://127.0.0.1:5000/api/sales/', {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify(payload)
+      });
+      toast('success', `Record added — ${product}`);
+    }
+    closeModal('recordModal');
+    loadSalesData(); // Reload from API
+  } catch (err) {
+    toast('error', 'Failed to save. Check Flask server.');
+  }
+}
+
+/* ── Delete from Flask API ── */
+async function confirmDelete() {
+  try {
+    for (const id of deleteTargetIds) {
+      await fetch(`http://127.0.0.1:5000/api/sales/${id}`, {
+        method: 'DELETE'
+      });
+    }
+    selectedIds.clear();
+    toast('success', `${deleteTargetIds.length} record(s) deleted.`);
+    closeModal('deleteModal');
+    loadSalesData();
+    updateBulkBar();
+  } catch (err) {
+    toast('error', 'Failed to delete. Check Flask server.');
+  }
+}
+
+/* ── Init ── */
+loadSalesData();
   </script>
 </body>
 

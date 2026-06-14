@@ -1589,7 +1589,7 @@
     function setPeriod(period, btn) {
       document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      // TODO: GET /api/customers/analytics?period=${period}
+      loadCustomers();
       const labels = { week: '7 days', month: 'This month', quarter: 'Q2 2026', year: 'FY 2026' };
       document.querySelector('.page-sub').textContent = `Module 6 · ${labels[period]} · Frequent buyers · New vs returning · Spending behaviour`;
     }
@@ -1604,13 +1604,140 @@
       }).click();
     }
 
-    /* ═══ INIT ═══ */
+    /* ═══ FETCH REAL DATA ═══ */
+async function loadCustomers() {
+  try {
+    const res = await fetch('http://127.0.0.1:5000/api/customers/');
+    const data = await res.json();
+
+    // Count segments
+    const counts = { Champions: 0, Regular: 0, 'One-Time': 0 };
+    let totalSpend = 0, totalOrders = 0, totalLTV = 0;
+    data.forEach(c => {
+      counts[c.segment] = (counts[c.segment] || 0) + 1;
+      totalSpend += c.total_spend;
+      totalOrders += c.total_orders;
+      totalLTV += c.ltv;
+    });
+
+    const total = data.length;
+    const avgLTV = Math.round(totalLTV / total);
+
+    // Update KPI cards
+    document.querySelector('.kpi-card.t .kpi-value').textContent = total.toLocaleString();
+    document.querySelector('.kpi-card.t .kpi-sub').textContent = 'All registered customers';
+    document.querySelector('.kpi-card.p .kpi-value').textContent = '$' + avgLTV;
+    document.querySelector('.kpi-card.p .kpi-sub').textContent = 'Per customer (LTV)';
+
+    // Update segment tiles with real counts
+    const champCount = counts['Champions'] || 0;
+    const regCount   = counts['Regular'] || 0;
+    const otCount    = counts['One-Time'] || 0;
+
+    document.querySelector('#spf1').closest('.seg-tile')
+      .querySelectorAll('.seg-stat-val')[0].textContent = champCount;
+    document.querySelector('#spf2').closest('.seg-tile')
+      .querySelectorAll('.seg-stat-val')[0].textContent = regCount;
+    document.querySelector('#spf3').closest('.seg-tile')
+      .querySelectorAll('.seg-stat-val')[0].textContent = otCount;
+
+    // Update avg spend in segment tiles
+    const champCustomers = data.filter(c => c.segment === 'Champions');
+    const regCustomers   = data.filter(c => c.segment === 'Regular');
+    const otCustomers    = data.filter(c => c.segment === 'One-Time');
+
+    if (champCustomers.length) {
+      const avgSpend = Math.round(champCustomers.reduce((s,c) => s + c.avg_spend, 0) / champCustomers.length);
+      document.querySelector('#spf1').closest('.seg-tile')
+        .querySelectorAll('.seg-stat-val')[1].textContent = '$' + avgSpend;
+    }
+    if (regCustomers.length) {
+      const avgSpend = Math.round(regCustomers.reduce((s,c) => s + c.avg_spend, 0) / regCustomers.length);
+      document.querySelector('#spf2').closest('.seg-tile')
+        .querySelectorAll('.seg-stat-val')[1].textContent = '$' + avgSpend;
+    }
+    if (otCustomers.length) {
+      const avgSpend = Math.round(otCustomers.reduce((s,c) => s + c.avg_spend, 0) / otCustomers.length);
+      document.querySelector('#spf3').closest('.seg-tile')
+        .querySelectorAll('.seg-stat-val')[1].textContent = '$' + avgSpend;
+    }
+
+    // Update segment progress bars
+    setTimeout(() => {
+      document.getElementById('spf1').style.width = (champCount/total*100) + '%';
+      document.getElementById('spf2').style.width = (regCount/total*100) + '%';
+      document.getElementById('spf3').style.width = (otCount/total*100) + '%';
+    }, 300);
+
+    // Update NVR donut with real segment data
+    const returning = champCount + regCount;
+    const newCust   = otCount;
+    const ctx = document.getElementById('nvr_chart').getContext('2d');
+    if (nvrChart) nvrChart.destroy();
+    nvrChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Returning', 'New/One-Time'],
+        datasets: [{
+          data: [returning, newCust],
+          backgroundColor: ['#0fb8a0', '#3b82f6'],
+          borderWidth: 0, hoverOffset: 10,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '68%',
+        animation: { duration: 750 },
+        plugins: { legend: { display: false },
+          tooltip: { ...TOOLTIP_DEFAULTS,
+            callbacks: { label: c => ` ${c.label}: ${c.parsed.toLocaleString()} customers` }
+          }
+        }
+      }
+    });
+
+    // Update donut center and legend
+    document.getElementById('nvrCentreVal').textContent = total.toLocaleString();
+    document.querySelector('.donut-lbl').textContent = 'Total Customers';
+
+    // Update top customers table with real data
+    TOP_CUSTOMERS.length = 0;
+    const SEG_BADGE = {
+      'Champions': 'badge-teal',
+      'Regular'  : 'badge-amber',
+      'One-Time' : 'badge-rose'
+    };
+    data.sort((a, b) => b.total_spend - a.total_spend)
+        .slice(0, 10)
+        .forEach(c => {
+          TOP_CUSTOMERS.push({
+            name    : c.name,
+            email   : c.email,
+            seg     : c.segment,
+            segBadge: SEG_BADGE[c.segment] || 'badge-teal',
+            orders  : c.total_orders,
+            spend   : c.total_spend,
+            ltv     : c.ltv
+          });
+        });
+
+    buildFreq();
+    buildSpend();
+    buildCustTable();
+    buildFunnel();
+
+  } catch (err) {
+    console.error('Customers load error:', err);
     buildNVR();
     buildFreq();
     buildSpend();
     buildCustTable();
     buildFunnel();
     animateSegBars();
+  }
+}
+
+/* ═══ INIT ═══ */
+loadCustomers();
   </script>
 </body>
 

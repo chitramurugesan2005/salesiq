@@ -1474,12 +1474,12 @@
 
     /* ════════ PERIOD ════════ */
     function setPeriod(period, btn) {
-      document.querySelectorAll('#periodTabs .sort-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const labels = { month: 'May 2026 · Month view', quarter: 'Q2 2026 · Quarter view', year: 'FY 2026 · Year view' };
-      document.getElementById('barSubLabel').textContent = `Ranked · ${labels[period]} · Click metric to re-sort`;
-      // TODO: GET /api/products/performance?period=${period}
-    }
+  document.querySelectorAll('#periodTabs .sort-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const labels = { month: 'May 2026 · Month view', quarter: 'Q2 2026 · Quarter view', year: 'FY 2026 · Year view' };
+  document.getElementById('barSubLabel').textContent = `Ranked · ${labels[period]} · Click metric to re-sort`;
+  loadProducts();
+}
 
     /* ════════ EXPORT ════════ */
     function exportData() {
@@ -1491,13 +1491,108 @@
       }).click();
     }
 
-    /* ════════ INIT ════════ */
+    /* ════════ FETCH REAL DATA ════════ */
+async function loadProducts() {
+  try {
+    const res = await fetch('http://127.0.0.1:5000/api/products/');
+    const data = await res.json();
+
+    // Map API data to PRODUCTS format
+    PRODUCTS.length = 0;
+    const EMOJIS = { Electronics: '📱', Clothing: '👗', 'Home & Living': '🏠', Beauty: '💄', Sports: '⚽', Books: '📚' };
+    data.forEach((p, i) => {
+      PRODUCTS.push({
+        rank    : i + 1,
+        name    : p.name,
+        cat     : p.category,
+        revenue : p.revenue,
+        units   : p.units,
+        margin  : Math.round((p.price / (p.price * 1.4)) * 100 * 0.45),
+        stock   : p.stock,
+        stockMax: p.stock + p.units,
+        emoji   : EMOJIS[p.category] || '📦',
+        spark   : [
+          Math.round(p.revenue * 0.6),
+          Math.round(p.revenue * 0.65),
+          Math.round(p.revenue * 0.7),
+          Math.round(p.revenue * 0.78),
+          Math.round(p.revenue * 0.85),
+          Math.round(p.revenue * 0.92),
+          Math.round(p.revenue)
+        ]
+      });
+    });
+
+    // Build category revenue from real data
+    CATEGORIES.length = 0;
+    Object.keys(CAT_COLORS).forEach(c => CATEGORIES.push(c));
+
+    Object.keys(CAT_REVENUE).forEach(k => delete CAT_REVENUE[k]);
+    PRODUCTS.forEach(p => {
+      CAT_REVENUE[p.cat] = (CAT_REVENUE[p.cat] || 0) + p.revenue;
+    });
+
+    // Update summary strip with real data
+    const totalRev = PRODUCTS.reduce((s, p) => s + p.revenue, 0);
+    const totalUnits = PRODUCTS.reduce((s, p) => s + p.units, 0);
+    const avgUnits = Math.round(totalUnits / PRODUCTS.length);
+    const topProduct = PRODUCTS[0];
+    const underCount = PRODUCTS.filter(p => p.revenue < 2000).length;
+
+    document.querySelector('.s-chip.c1 .s-chip-value').textContent = PRODUCTS.length;
+    document.querySelector('.s-chip.c1 .s-chip-sub').textContent =
+      'Across ' + Object.keys(CAT_REVENUE).length + ' categories';
+    document.querySelector('.s-chip.c2 .s-chip-value').textContent =
+      '$' + (topProduct.revenue / 1000).toFixed(1) + 'K';
+    document.querySelector('.s-chip.c2 .s-chip-sub').textContent = topProduct.name;
+    document.querySelector('.s-chip.c3 .s-chip-value').textContent = avgUnits;
+    document.querySelector('.s-chip.c4 .s-chip-value').textContent = underCount;
+
+    // Update underperformers from real data
+    UNDERPERFORMERS.length = 0;
+    PRODUCTS.filter(p => p.revenue < 2000).forEach(p => {
+      const issue = p.stock === 0 ? 'Out of stock' :
+                    p.units < 20  ? 'Low demand'   :
+                    p.revenue < 1000 ? 'Very low revenue' : 'Below threshold';
+      const badge = p.stock === 0 ? 'badge-red' :
+                    p.units < 20  ? 'badge-amber' : 'badge-purple';
+      UNDERPERFORMERS.push({
+        name        : p.name,
+        cat         : p.cat,
+        revenue     : p.revenue,
+        units       : p.units,
+        issue       : issue,
+        issueBadge  : badge
+      });
+    });
+
+    // Update underperformer count badge
+    document.querySelector('.badge-red').textContent = underCount + ' flagged';
+
+    // Update donut center
+    document.querySelector('.donut-center-val').textContent =
+      '$' + Math.round(totalRev / 1000) + 'K';
+
     buildCatFilter();
     buildHBars();
     buildDonut();
     buildLeaderboard();
     buildUnderTable();
     buildStockList();
+
+  } catch (err) {
+    console.error('Products load error:', err);
+    buildCatFilter();
+    buildHBars();
+    buildDonut();
+    buildLeaderboard();
+    buildUnderTable();
+    buildStockList();
+  }
+}
+
+/* ════════ INIT ════════ */
+loadProducts();
   </script>
 </body>
 
