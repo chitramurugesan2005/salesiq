@@ -1155,23 +1155,23 @@
             </div>
             <div class="card-body">
               <div class="acc-grid" style="margin-bottom:14px;">
-                <div class="acc-item">
-                  <div class="acc-val" style="color:var(--green);">0.948</div>
-                  <div class="acc-label">R² Score</div>
-                </div>
-                <div class="acc-item">
-                  <div class="acc-val" style="color:var(--cyan);">$2,184</div>
-                  <div class="acc-label">MAE</div>
-                </div>
-                <div class="acc-item">
-                  <div class="acc-val" style="color:var(--violet);">$2,910</div>
-                  <div class="acc-label">RMSE</div>
-                </div>
-                <div class="acc-item">
-                  <div class="acc-val" style="color:var(--amber);">4.2%</div>
-                  <div class="acc-label">MAPE</div>
-                </div>
-              </div>
+    <div class="acc-item">
+        <div class="acc-val" id="r2Val" style="color:var(--green);">--</div>
+        <div class="acc-label">R² Score</div>
+    </div>
+    <div class="acc-item">
+        <div class="acc-val" id="maeVal" style="color:var(--cyan);">--</div>
+        <div class="acc-label">MAE</div>
+    </div>
+    <div class="acc-item">
+        <div class="acc-val" id="rmseVal" style="color:var(--violet);">--</div>
+        <div class="acc-label">RMSE</div>
+    </div>
+    <div class="acc-item">
+        <div class="acc-val" id="mapeVal" style="color:var(--amber);">--</div>
+        <div class="acc-label">MAPE</div>
+    </div>
+</div>
               <!-- Residual mini chart -->
               <div
                 style="font-size:10px;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:8px;">
@@ -1311,7 +1311,44 @@
     };
 
     let activeScenario = 'base';
-    let forecastChart, residualChart;
+let forecastChart, residualChart;
+
+/* ═══ FETCH REAL AI DATA ═══ */
+async function loadRealForecast() {
+    try {
+        const res = await fetch('http://127.0.0.1:5000/api/ai/forecast');
+        const data = await res.json();
+
+        if (data.error) {
+            console.error('Forecast error:', data.error);
+            return;
+        }
+
+        // Update Model Performance card
+        document.getElementById('r2Val').textContent   = data.r_squared;
+        document.getElementById('maeVal').textContent  = '$' + Number(data.mae).toLocaleString();
+        document.getElementById('rmseVal').textContent = '$' + Number(data.rmse).toLocaleString();
+        document.getElementById('mapeVal').textContent = data.mape + '%';
+
+        // Update AI banner text
+        const banner = document.querySelector('.ai-desc');
+        if (banner) {
+            banner.textContent =
+                `Trained on ${data.samples} months of historical sales data · ` +
+                `R² = ${data.r_squared} · MAE = $${Number(data.mae).toLocaleString()} · ` +
+                `Last run: ${new Date().toLocaleString()}`;
+        }
+
+        // Update top KPI accuracy card
+        const accCard = document.querySelector('.kpi-card.cg .kpi-value');
+        if (accCard) {
+            accCard.textContent = (data.r_squared * 100).toFixed(1) + '%';
+        }
+
+    } catch (err) {
+        console.error('Failed to load forecast:', err);
+    }
+}
 
     const TT = { backgroundColor: 'rgba(8,12,26,0.97)', borderColor: 'rgba(139,92,246,0.2)', borderWidth: 1, titleColor: '#d4dcf0', bodyColor: '#4a5670', padding: 13, cornerRadius: 10 };
 
@@ -1518,12 +1555,14 @@ fetch('http://127.0.0.1:5000/api/ai/forecast')
     buildForecastChart();
     buildResidual();
     buildPredTable();
+    loadRealForecast();
   })
   .catch((err) => {
     console.log('API Error:', err);
     buildForecastChart();
     buildResidual();
     buildPredTable();
+    loadRealForecast();
   });
   </script>
 </body>

@@ -80,8 +80,19 @@ def get_kpis():
 # ── Revenue Trend ──
 @dashboard_bp.route('/trend', methods=['GET'])
 def get_trend():
-    period = request.args.get('period', '30d')
-    start, end = get_date_range(period)
+    period    = request.args.get('period', '30d')
+    date_from = request.args.get('from', None)
+    date_to   = request.args.get('to', None)
+
+    # If custom date range provided, use it
+    if date_from and date_to:
+        try:
+            start = datetime.strptime(date_from, '%Y-%m-%d').date()
+            end   = datetime.strptime(date_to,   '%Y-%m-%d').date()
+        except ValueError:
+            start, end = get_date_range(period)
+    else:
+        start, end = get_date_range(period)
 
     results = db.session.query(
         Sale.sale_date,
@@ -96,9 +107,9 @@ def get_trend():
         Sale.sale_date
     ).all()
 
-    labels   = []
-    revenue  = []
-    orders   = []
+    labels  = []
+    revenue = []
+    orders  = []
 
     for row in results:
         labels.append(row[0].strftime('%d %b'))

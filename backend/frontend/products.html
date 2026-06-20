@@ -1272,6 +1272,7 @@
     /* ════════ STATE ════════ */
     let activeCat = 'All';
     let sortMetric = 'revenue';
+    let currentPeriod = 'quarter';
     let donutInst = null;
     const sparkInsts = {};
 
@@ -1476,6 +1477,7 @@
     function setPeriod(period, btn) {
   document.querySelectorAll('#periodTabs .sort-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  currentPeriod = period;
   const labels = { month: 'May 2026 · Month view', quarter: 'Q2 2026 · Quarter view', year: 'FY 2026 · Year view' };
   document.getElementById('barSubLabel').textContent = `Ranked · ${labels[period]} · Click metric to re-sort`;
   loadProducts();
@@ -1494,7 +1496,7 @@
     /* ════════ FETCH REAL DATA ════════ */
 async function loadProducts() {
   try {
-    const res = await fetch('http://127.0.0.1:5000/api/products/');
+    const res = await fetch(`http://127.0.0.1:5000/api/products/?period=${currentPeriod}`);
     const data = await res.json();
 
     // Map API data to PRODUCTS format
@@ -1550,24 +1552,23 @@ async function loadProducts() {
 
     // Update underperformers from real data
     UNDERPERFORMERS.length = 0;
-    PRODUCTS.filter(p => p.revenue < 2000).forEach(p => {
-      const issue = p.stock === 0 ? 'Out of stock' :
-                    p.units < 20  ? 'Low demand'   :
-                    p.revenue < 1000 ? 'Very low revenue' : 'Below threshold';
-      const badge = p.stock === 0 ? 'badge-red' :
-                    p.units < 20  ? 'badge-amber' : 'badge-purple';
-      UNDERPERFORMERS.push({
-        name        : p.name,
-        cat         : p.cat,
-        revenue     : p.revenue,
-        units       : p.units,
-        issue       : issue,
-        issueBadge  : badge
-      });
-    });
+PRODUCTS.filter(p => p.revenue === 0).forEach(p => {
+  const issue = p.stock === 0 ? 'Out of stock' : 'No sales this period';
+  const badge = p.stock === 0 ? 'badge-red'   : 'badge-amber';
+  UNDERPERFORMERS.push({
+    name       : p.name,
+    cat        : p.cat,
+    revenue    : p.revenue,
+    units      : p.units,
+    issue      : issue,
+    issueBadge : badge
+  });
+});
 
     // Update underperformer count badge
-    document.querySelector('.badge-red').textContent = underCount + ' flagged';
+   const activeUnderCount = PRODUCTS.filter(p => p.revenue === 0).length;
+    document.querySelector('.badge-red').textContent = activeUnderCount + ' flagged';
+    document.querySelector('.s-chip.c4 .s-chip-value').textContent = activeUnderCount;
 
     // Update donut center
     document.querySelector('.donut-center-val').textContent =

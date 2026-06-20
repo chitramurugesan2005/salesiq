@@ -1447,6 +1447,7 @@
     ];
 
     let nvrChart, freqChart, spendChart;
+    let currentPeriod = 'month';
 
     /* ═══ Charts ═══ */
     const TOOLTIP_DEFAULTS = {
@@ -1587,12 +1588,10 @@
 
     /* ═══ Period switcher ═══ */
     function setPeriod(period, btn) {
-      document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      loadCustomers();
-      const labels = { week: '7 days', month: 'This month', quarter: 'Q2 2026', year: 'FY 2026' };
-      document.querySelector('.page-sub').textContent = `Module 6 · ${labels[period]} · Frequent buyers · New vs returning · Spending behaviour`;
-    }
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPeriod = period;
+}
 
     /* ═══ Export ═══ */
     function exportCustomers() {
@@ -1607,7 +1606,7 @@
     /* ═══ FETCH REAL DATA ═══ */
 async function loadCustomers() {
   try {
-    const res = await fetch('http://127.0.0.1:5000/api/customers/');
+    const res = await fetch(`http://127.0.0.1:5000/api/customers/?period=${currentPeriod}`);
     const data = await res.json();
 
     // Count segments

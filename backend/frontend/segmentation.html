@@ -1395,22 +1395,25 @@
     }
 
     const AXES = {
-      'spend-freq': {
-        xLabel: 'Purchase Frequency (per quarter)', yLabel: 'Avg Spend ($)', sub: 'Purchase Frequency vs Avg Spend · 4,820 customers · K=3 clusters',
-        c0: genCluster(120, 8.4, 520, 2.2, 80, ''), c1: genCluster(300, 2.8, 185, 1.2, 55, ''), c2: genCluster(250, 1.0, 62, 0.3, 20, ''),
-        cent0: { x: 8.4, y: 520 }, cent1: { x: 2.8, y: 185 }, cent2: { x: 1.0, y: 62 }
-      },
-      'spend-orders': {
-        xLabel: 'Total Orders (all time)', yLabel: 'Avg Spend ($)', sub: 'Total Orders vs Avg Spend · 4,820 customers · K=3 clusters',
-        c0: genCluster(120, 42, 520, 12, 80, ''), c1: genCluster(300, 14, 185, 6, 55, ''), c2: genCluster(250, 3, 62, 1.5, 20, ''),
-        cent0: { x: 42, y: 520 }, cent1: { x: 14, y: 185 }, cent2: { x: 3, y: 62 }
-      },
-      'freq-ltv': {
-        xLabel: 'Purchase Frequency (per quarter)', yLabel: 'Lifetime Value ($)', sub: 'Purchase Frequency vs LTV · 4,820 customers · K=3 clusters',
-        c0: genCluster(120, 8.4, 4368, 2.2, 600, ''), c1: genCluster(300, 2.8, 518, 1.2, 120, ''), c2: genCluster(250, 1.0, 62, 0.3, 15, ''),
-        cent0: { x: 8.4, y: 4368 }, cent1: { x: 2.8, y: 518 }, cent2: { x: 1.0, y: 62 }
-      },
-    };
+  'spend-freq': {
+    xLabel: 'Purchase Frequency (Avg Orders)', yLabel: 'Avg Spend ($)',
+    sub: 'Purchase Frequency vs Avg Spend · Real customer data · K=3 clusters',
+    c0: [], c1: [], c2: [],
+    cent0: { x: 0, y: 0 }, cent1: { x: 0, y: 0 }, cent2: { x: 0, y: 0 }
+  },
+  'spend-orders': {
+    xLabel: 'Total Orders (all time)', yLabel: 'Avg Spend ($)',
+    sub: 'Total Orders vs Avg Spend · Real customer data · K=3 clusters',
+    c0: [], c1: [], c2: [],
+    cent0: { x: 0, y: 0 }, cent1: { x: 0, y: 0 }, cent2: { x: 0, y: 0 }
+  },
+  'freq-ltv': {
+    xLabel: 'Total Orders (all time)', yLabel: 'Lifetime Value ($)',
+    sub: 'Purchase Frequency vs LTV · Real customer data · K=3 clusters',
+    c0: [], c1: [], c2: [],
+    cent0: { x: 0, y: 0 }, cent1: { x: 0, y: 0 }, cent2: { x: 0, y: 0 }
+  },
+};
 
     let scatterChart, elbowChart, donutChart, activeAxis = 'spend-freq';
 
@@ -1537,15 +1540,68 @@
     fetch('http://127.0.0.1:5000/api/ai/segment')
   .then(res => res.json())
   .then(data => {
+    const customers = data.customers;
+    const summary   = data.summary;
+    const total     = customers.length;
 
-    const summary = data.summary;
-    const total = data.customers.length;
+    // Clear all axis data
+    ['spend-freq', 'spend-orders', 'freq-ltv'].forEach(axis => {
+      AXES[axis].c0 = [];
+      AXES[axis].c1 = [];
+      AXES[axis].c2 = [];
+    });
 
+    // Map cluster number to index
+    const clusterMap = {};
+    customers.forEach(c => {
+      const seg = c.segment;
+      if (seg === 'Champions') clusterMap[c.cluster] = 0;
+      else if (seg === 'Regular') clusterMap[c.cluster] = 1;
+      else clusterMap[c.cluster] = 2;
+    });
+
+    // Populate real data points for each axis
+    customers.forEach(c => {
+      const clusterIdx = clusterMap[c.cluster] ?? 2;
+      const key = ['c0', 'c1', 'c2'][clusterIdx];
+
+      // spend-freq: x = avg_orders (total_orders), y = avg_spend
+      AXES['spend-freq'][key].push({
+        x: parseFloat(c.total_orders),
+        y: parseFloat(c.avg_spend)
+      });
+
+      // spend-orders: x = total_orders, y = avg_spend
+      AXES['spend-orders'][key].push({
+        x: parseFloat(c.total_orders),
+        y: parseFloat(c.avg_spend)
+      });
+
+      // freq-ltv: x = total_orders, y = ltv
+      AXES['freq-ltv'][key].push({
+        x: parseFloat(c.total_orders),
+        y: parseFloat(c.ltv)
+      });
+    });
+
+    // Calculate centroids for each axis
+    ['spend-freq', 'spend-orders', 'freq-ltv'].forEach(axis => {
+      ['cent0', 'cent1', 'cent2'].forEach((cent, i) => {
+        const pts = AXES[axis]['c' + i];
+        if (pts.length > 0) {
+          AXES[axis][cent] = {
+            x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
+            y: pts.reduce((s, p) => s + p.y, 0) / pts.length
+          };
+        }
+      });
+    });
+
+    // Update cluster cards
     const champCount = summary['Champions'] || 0;
-    const regCount = summary['Regular'] || 0;
-    const otCount = summary['One-Time'] || 0;
+    const regCount   = summary['Regular'] || 0;
+    const otCount    = summary['One-Time'] || 0;
 
-    // Update cluster card counts
     document.getElementById('cpf0').closest('.cluster-card')
       .querySelector('.cs-val').textContent = champCount;
     document.getElementById('cpf1').closest('.cluster-card')
@@ -1553,19 +1609,47 @@
     document.getElementById('cpf2').closest('.cluster-card')
       .querySelector('.cs-val').textContent = otCount;
 
+    // Update avg spend in cluster cards
+    const champCustomers = customers.filter(c => c.segment === 'Champions');
+    const regCustomers   = customers.filter(c => c.segment === 'Regular');
+    const otCustomers    = customers.filter(c => c.segment === 'One-Time');
+
+    if (champCustomers.length) {
+      const avgSpend = Math.round(
+        champCustomers.reduce((s, c) => s + c.avg_spend, 0) / champCustomers.length
+      );
+      document.getElementById('cpf0').closest('.cluster-card')
+        .querySelectorAll('.cs-val')[1].textContent = '$' + avgSpend;
+    }
+    if (regCustomers.length) {
+      const avgSpend = Math.round(
+        regCustomers.reduce((s, c) => s + c.avg_spend, 0) / regCustomers.length
+      );
+      document.getElementById('cpf1').closest('.cluster-card')
+        .querySelectorAll('.cs-val')[1].textContent = '$' + avgSpend;
+    }
+    if (otCustomers.length) {
+      const avgSpend = Math.round(
+        otCustomers.reduce((s, c) => s + c.avg_spend, 0) / otCustomers.length
+      );
+      document.getElementById('cpf2').closest('.cluster-card')
+        .querySelectorAll('.cs-val')[1].textContent = '$' + avgSpend;
+    }
+
     // Update banner
     document.querySelector('.ai-desc').textContent =
       `Trained on ${total} customers · K=${data.k} clusters · Silhouette Score = 0.74`;
 
-    // Update model config — samples count
-    document.querySelectorAll('.metric-val')[3].textContent = total;
+    // Update scatter subtitle
+    document.getElementById('scatterSub').textContent =
+      `Purchase Frequency vs Avg Spend · ${total} customers · K=3 clusters`;
 
     buildScatter();
     buildElbow();
 
     // Build donut with real data
-    if (window.donutChart) window.donutChart.destroy();
     const ctx = document.getElementById('clusterDonut').getContext('2d');
+    if (window.donutChart) window.donutChart.destroy();
     window.donutChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -1585,7 +1669,7 @@
       }
     });
 
-    // Animate progress bars with real data
+    // Animate progress bars
     const tot = champCount + regCount + otCount;
     setTimeout(() => {
       document.getElementById('cpf0').style.width = (champCount / tot * 100) + '%';

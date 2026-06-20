@@ -1188,6 +1188,7 @@
 
     let regionMetric = 'revenue';
     let trendChart, shareDonut;
+    let currentPeriod = 'quarter';
 
     /* ═══ Region bars ═══ */
     function buildRegionList() {
@@ -1354,10 +1355,11 @@
 }
 
     function setPeriod(period, btn) {
-      document.querySelectorAll('.period-tabs .period-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      loadRegional();
-    }
+  document.querySelectorAll('.period-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPeriod = period;
+  loadRegional();
+}
 
     function exportCSV() {
       const rows = CITIES.map(c => [c.rank, c.city, c.region, '$' + c.revenue, c.orders].join(','));
@@ -1368,7 +1370,7 @@
     /* ═══ FETCH REAL DATA ═══ */
 async function loadRegional() {
   try {
-    const res = await fetch('http://127.0.0.1:5000/api/regional/');
+    const res = await fetch(`http://127.0.0.1:5000/api/regional/?period=${currentPeriod}`);
     const data = await res.json();
 
     // Update REGIONS with real data

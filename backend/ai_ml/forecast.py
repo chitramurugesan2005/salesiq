@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from datetime import date
 from models import db
 from sqlalchemy import text
@@ -10,7 +11,7 @@ def get_monthly_sales():
         SELECT 
             YEAR(sale_date)  AS yr,
             MONTH(sale_date) AS mo,
-            SUM(revenue) AS total
+            SUM(revenue)     AS total
         FROM sales
         GROUP BY YEAR(sale_date), MONTH(sale_date)
         ORDER BY yr, mo
@@ -30,7 +31,22 @@ def run_forecast():
     model = LinearRegression()
     model.fit(X, y)
 
-    future_X = np.array(range(len(rows) + 1, len(rows) + 7)).reshape(-1, 1)
+    # ── Predictions on training data for accuracy metrics ──
+    y_pred_train = model.predict(X)
+
+    mae  = mean_absolute_error(y, y_pred_train)
+    mse  = mean_squared_error(y, y_pred_train)
+    rmse = np.sqrt(mse)
+
+    # MAPE — avoid division by zero
+    mape = np.mean(
+        np.abs((y - y_pred_train) / y)
+    ) * 100
+
+    # ── Future predictions ──
+    future_X = np.array(
+        range(len(rows) + 1, len(rows) + 7)
+    ).reshape(-1, 1)
     predictions = model.predict(future_X)
 
     last_yr = int(rows[-1].yr)
@@ -58,5 +74,11 @@ def run_forecast():
     return {
         "historical": historical,
         "forecast":   forecast,
-        "r_squared":  round(model.score(X, y), 4)
+        "r_squared":  round(model.score(X, y), 4),
+        "mae":        round(float(mae), 2),
+        "rmse":       round(float(rmse), 2),
+        "mape":       round(float(mape), 2),
+        "coefficient": round(float(model.coef_[0]), 2),
+        "intercept":   round(float(model.intercept_), 2),
+        "samples":     len(rows)
     }, None

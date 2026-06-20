@@ -29,9 +29,10 @@ def get_customers():
     period  = request.args.get('period', 'month')
     segment = request.args.get('segment', '')
     search  = request.args.get('search', '')
+    start, end = get_date_range(period)
 
+    # Query customers
     query = Customer.query
-
     if segment:
         query = query.filter(Customer.segment == segment)
     if search:
@@ -40,9 +41,7 @@ def get_customers():
             Customer.email.ilike(f'%{search}%')
         )
 
-    customers = query.order_by(
-        Customer.total_spend.desc()
-    ).all()
+    customers = query.order_by(Customer.total_spend.desc()).all()
 
     result = []
     for c in customers:
@@ -55,8 +54,12 @@ def get_customers():
             'total_orders' : c.total_orders,
             'total_spend'  : float(c.total_spend),
             'avg_spend'    : float(c.avg_spend),
-            'ltv'          : float(c.ltv)
-        })
+            'ltv'          : float(c.ltv),
+            'active_period': True
+    })
+
+    # Sort by period spend
+    result.sort(key=lambda x: x['total_spend'], reverse=True)
 
     return jsonify(result), 200
 

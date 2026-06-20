@@ -1700,19 +1700,27 @@ function buildHeatmap() {
     }
 
     function applyDateFilter() {
-      // TODO: filter data by date range from backend — currently uses preset datasets
-      flashStat();
-    }
+  setTimeout(() => {
+    loadTrendData(granularity);
+    flashStat();
+  }, 50);
+}
 
     function setPreset(preset) {
-      const today = new Date();
-      const from = new Date();
-      const presets = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 };
-      from.setMonth(today.getMonth() - (presets[preset] || 6));
-      document.getElementById('dateFrom').value = from.toISOString().slice(0, 10);
-      document.getElementById('dateTo').value = today.toISOString().slice(0, 10);
-      flashStat();
-    }
+  const today = new Date();
+  const from  = new Date();
+  const presets = { '1m': 1, '3m': 3, '6m': 6, '1y': 12 };
+  from.setMonth(today.getMonth() - (presets[preset] || 6));
+
+  document.getElementById('dateFrom').value = from.toISOString().slice(0, 10);
+  document.getElementById('dateTo').value   = today.toISOString().slice(0, 10);
+
+  // Small delay to ensure date inputs are updated before fetch
+  setTimeout(() => {
+    loadTrendData(granularity);
+    flashStat();
+  }, 50);
+}
 
     function flashStat() {
       /* Pulse effect on stat chips when filter changes */
@@ -1750,7 +1758,12 @@ function buildHeatmap() {
 async function loadTrendData(granularity_param) {
   try {
     const periodMap = { daily: '30d', monthly: '1y', yearly: '1y' };
-    const res = await fetch(`http://127.0.0.1:5000/api/dashboard/trend?period=${periodMap[granularity_param] || '1y'}`);
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo   = document.getElementById('dateTo').value;
+    const url = dateFrom && dateTo
+      ? `http://127.0.0.1:5000/api/dashboard/trend?period=${periodMap[granularity_param] || '1y'}&from=${dateFrom}&to=${dateTo}`
+      : `http://127.0.0.1:5000/api/dashboard/trend?period=${periodMap[granularity_param] || '1y'}`;
+    const res = await fetch(url);
     const raw = await res.json();
 
     if (granularity_param === 'monthly') {
